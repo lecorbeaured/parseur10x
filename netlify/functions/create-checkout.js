@@ -5,7 +5,6 @@
 //   STRIPE_SECRET_KEY = sk_live_... (or sk_test_... for testing)
 //   SITE_URL = https://parseur10x.live
 //
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 exports.handler = async (event) => {
   // CORS headers
@@ -23,7 +22,18 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
+  // Check for missing secret key
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.error('STRIPE_SECRET_KEY environment variable is not set');
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: 'Payment system not configured. Please contact support.' }),
+    };
+  }
+
   try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     const { priceId } = JSON.parse(event.body || '{}');
     
     // Only allow the known Pro plan price ID
@@ -51,7 +61,6 @@ exports.handler = async (event) => {
       cancel_url: `${siteUrl}/app.html?canceled=true`,
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
-      customer_creation: 'always',
       metadata: {
         product: 'parseur10x_pro',
       },
