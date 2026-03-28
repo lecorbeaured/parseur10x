@@ -785,145 +785,33 @@
                 <circle class="bg" cx="60" cy="60" r="54"/>
                 <circle class="fill" cx="60" cy="60" r="54" id="scoreRing"/>
               </svg>
-              <div class="score-num" id="scoreNum">583</div>
+              <div class="score-num" id="scoreNum">0</div>
             </div>
-            <div class="score-label">Credit Health Score</div>
+            <div class="score-label" id="scoreLabel">Credit Health Score</div>
           </div>
           <div class="summary-card">
             <div class="summary-title">Report Overview</div>
-            <div class="stat-row"><span>Total Accounts</span> <span class="stat-value">14</span></div>
-            <div class="stat-row"><span>Open Accounts</span> <span class="stat-value">8</span></div>
-            <div class="stat-row"><span>Closed Accounts</span> <span class="stat-value">6</span></div>
-            <div class="stat-row"><span>Total Balance</span> <span class="stat-value">$23,450</span></div>
-            <div class="stat-row"><span>Hard Inquiries</span> <span class="stat-value yellow">5</span></div>
+            <div id="reportOverview"></div>
           </div>
           <div class="summary-card">
             <div class="summary-title">Issue Breakdown</div>
-            <div class="stat-row"><span>🔴 High Impact</span> <span class="stat-value red">3</span></div>
-            <div class="stat-row"><span>🟡 Medium Impact</span> <span class="stat-value yellow">2</span></div>
-            <div class="stat-row"><span>🟢 Low Impact</span> <span class="stat-value green">1</span></div>
-            <div class="stat-row"><span>Estimated Score Gain</span> <span class="stat-value green">+85-120 pts</span></div>
-            <div class="stat-row"><span>Dispute Priority</span> <span class="stat-value red">High</span></div>
+            <div id="issueBreakdown"></div>
           </div>
         </div>
 
-        <!-- Negative Items -->
+        <!-- Negative Items (dynamic) -->
         <div class="neg-section">
           <div class="neg-header">
             <h2>⚠️ Flagged Negative Items</h2>
-            <div class="neg-count">6 items found</div>
+            <div class="neg-count" id="negCount">0 items found</div>
           </div>
-
-          <div class="neg-item">
-            <div class="neg-item-info">
-              <h4>Midland Credit Management — Collection</h4>
-              <p>Original creditor: AT&T • Balance: $847 • Opened: 03/2023</p>
-            </div>
-            <span class="neg-impact high">High Impact</span>
-            <button class="neg-action" onclick="showDisputeLetter('midland')">Generate Letter ✉️</button>
-          </div>
-
-          <div class="neg-item">
-            <div class="neg-item-info">
-              <h4>Capital One — 60-Day Late Payment</h4>
-              <p>Account #****4521 • Reported: 11/2024 • Otherwise current</p>
-            </div>
-            <span class="neg-impact high">High Impact</span>
-            <button class="neg-action" onclick="showDisputeLetter('capitalone')">Generate Letter ✉️</button>
-          </div>
-
-          <div class="neg-item">
-            <div class="neg-item-info">
-              <h4>Portfolio Recovery — Collection</h4>
-              <p>Original creditor: Verizon • Balance: $312 • Opened: 07/2022</p>
-            </div>
-            <span class="neg-impact high">High Impact</span>
-            <button class="neg-action" onclick="showDisputeLetter('portfolio')">Generate Letter ✉️</button>
-          </div>
-
-          <div class="neg-item">
-            <div class="neg-item-info">
-              <h4>Discover — High Utilization (89%)</h4>
-              <p>Balance: $4,450 / $5,000 limit • Payment: Current</p>
-            </div>
-            <span class="neg-impact medium">Medium Impact</span>
-            <button class="neg-action" onclick="showRec('utilization')">See Fix →</button>
-          </div>
-
-          <div class="neg-item">
-            <div class="neg-item-info">
-              <h4>Chase — 30-Day Late Payment</h4>
-              <p>Account #****8833 • Reported: 06/2024 • Now current</p>
-            </div>
-            <span class="neg-impact medium">Medium Impact</span>
-            <button class="neg-action" onclick="showDisputeLetter('chase')">Generate Letter ✉️</button>
-          </div>
-
-          <div class="neg-item">
-            <div class="neg-item-info">
-              <h4>Hard Inquiries — 5 in last 12 months</h4>
-              <p>Multiple inquiries may lower score by 5-10 points each</p>
-            </div>
-            <span class="neg-impact low">Low Impact</span>
-            <button class="neg-action" onclick="showRec('inquiries')">See Fix →</button>
-          </div>
+          <div id="negItemsList"></div>
         </div>
 
-        <!-- AI Recommendations -->
+        <!-- AI Recommendations (dynamic) -->
         <div style="margin-bottom:24px">
           <h2 style="font-family:var(--font-display);font-size:1.15rem;font-weight:700;margin-bottom:16px;">🎯 AI Recommendations</h2>
-
-          <div class="rec-card">
-            <div class="rec-icon">🗑️</div>
-            <div class="rec-content">
-              <h4>Dispute Midland Credit Collection — Highest Priority</h4>
-              <p>This collection is from 2023 and the original balance is under $1,000. Request debt validation under FDCPA §1692g. Many collectors cannot produce original signed agreements for telecom debts, leading to removal.</p>
-            </div>
-          </div>
-
-          <div class="rec-card">
-            <div class="rec-icon">💌</div>
-            <div class="rec-content">
-              <h4>Send Goodwill Letter to Capital One</h4>
-              <p>Since this account is otherwise current with a good payment history, a goodwill adjustment letter has a strong chance of success. Capital One has a known goodwill process.</p>
-            </div>
-          </div>
-
-          <div class="rec-card">
-            <div class="rec-icon">📉</div>
-            <div class="rec-content">
-              <h4>Lower Discover Utilization Below 30%</h4>
-              <p>Your 89% utilization on Discover is costing you 20-30 points. Pay down to under $1,500 (30%) or request a credit limit increase. Target under 10% for maximum score benefit.</p>
-            </div>
-          </div>
-
-          <div class="rec-card" style="background:var(--success-light);border-color:rgba(5,150,105,0.15);">
-            <div class="rec-icon">🏗️</div>
-            <div class="rec-content">
-              <h4>Build Positive Tradelines</h4>
-              <p>Your credit file has only 8 open accounts. Adding 1-2 positive tradelines will diversify your credit mix and boost your average account age over time.</p>
-              <a href="https://kikoff.pxf.io/c/7007975/2344833/14994" target="_blank" rel="noopener sponsored" class="rec-affiliate">Try Kikoff — $0/mo credit builder →</a>
-              <img height="0" width="0" src="https://imp.pxf.io/i/7007975/2344833/14994" style="position:absolute;visibility:hidden;" border="0" />
-            </div>
-          </div>
-
-          <div class="rec-card" style="background:var(--pro-gold-light);border-color:rgba(184,134,11,0.15);">
-            <div class="rec-icon">💳</div>
-            <div class="rec-content">
-              <h4>Consider a Credit Builder Card</h4>
-              <p>While you work on removing negatives, a credit builder card can add positive payment history each month — with no hard pull on your credit.</p>
-              <a href="https://meetava.sjv.io/KB0xLA" target="_blank" rel="noopener sponsored" class="rec-affiliate">Check Ava Credit eligibility →</a>
-            </div>
-          </div>
-
-          <div class="rec-card">
-            <div class="rec-icon">🔍</div>
-            <div class="rec-content">
-              <h4>Monitor Your Progress</h4>
-              <p>After filing disputes, monitor your reports weekly for updates. Bureau responses typically arrive within 30-45 days. Track score changes in real-time.</p>
-              <a href="https://www.identityiq.com/sc-securemax.aspx?offercode=431297RY" target="_blank" rel="noopener sponsored" class="rec-affiliate">Start IdentityIQ monitoring →</a>
-            </div>
-          </div>
+          <div id="recsList"></div>
         </div>
       </div>
 
@@ -1017,6 +905,7 @@
 <!-- Confetti Container -->
 <div class="confetti-container" id="confettiContainer"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
   // ==================== STATE MANAGEMENT ====================
@@ -1153,6 +1042,13 @@
     }, 4000);
   }
 
+  // ==================== AFFILIATE LINKS ====================
+  const AFFILIATES = {
+    kikoff: { url: 'https://kikoff.pxf.io/c/7007975/2344833/14994', label: 'Try Kikoff — $0/mo credit builder →', pixel: 'https://imp.pxf.io/i/7007975/2344833/14994' },
+    ava: { url: 'https://meetava.sjv.io/KB0xLA', label: 'Check Ava Credit eligibility →', pixel: null },
+    identityiq: { url: 'https://www.identityiq.com/sc-securemax.aspx?offercode=431297RY', label: 'Start IdentityIQ monitoring →', pixel: null },
+  };
+
   // ==================== FILE UPLOAD ====================
   const uploadZone = document.getElementById('uploadZone');
 
@@ -1172,39 +1068,115 @@
   function handleFileUpload(file) {
     if (!file) return;
     if (file.type !== 'application/pdf') {
-      alert('Please upload a PDF file.');
+      showToast('Please upload a PDF file.', 'warning');
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      showToast('File too large. Max 20MB.', 'warning');
       return;
     }
     APP_STATE.fileName = file.name;
-    startProcessing();
+    startProcessing(file);
   }
 
   // ==================== PROCESSING ====================
-  function startProcessing() {
+  function updateStep(stepNum, status) {
+    const el = document.getElementById('step' + stepNum);
+    if (!el) return;
+    el.classList.remove('active', 'done');
+    if (status === 'active') el.classList.add('active');
+    if (status === 'done') {
+      el.classList.add('done');
+      el.querySelector('.step-indicator').textContent = '✓';
+    }
+  }
+
+  async function startProcessing(file) {
     document.getElementById('uploadState').style.display = 'none';
     document.getElementById('processingState').style.display = 'block';
 
-    const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
-    let current = 0;
+    try {
+      // Step 1: Extract text from PDF using pdf.js
+      updateStep(1, 'active');
+      const reportText = await extractPdfText(file);
+      updateStep(1, 'done');
 
-    const interval = setInterval(() => {
-      if (current > 0) {
-        document.getElementById(steps[current - 1]).classList.remove('active');
-        document.getElementById(steps[current - 1]).classList.add('done');
-        document.getElementById(steps[current - 1]).querySelector('.step-indicator').textContent = '✓';
+      if (!reportText || reportText.trim().length < 50) {
+        throw new Error('Could not extract text from this PDF. It may be a scanned image. Please try a text-based credit report PDF.');
       }
-      if (current < steps.length) {
-        document.getElementById(steps[current]).classList.add('active');
-        current++;
-      } else {
-        clearInterval(interval);
-        setTimeout(showResults, 800);
-      }
-    }, 1200);
+
+      // Step 2-4: Send to Claude API for analysis
+      updateStep(2, 'active');
+      await sleep(400);
+      updateStep(2, 'done');
+      updateStep(3, 'active');
+
+      const analysis = await analyzeReport(reportText);
+
+      updateStep(3, 'done');
+      updateStep(4, 'active');
+      await sleep(400);
+      updateStep(4, 'done');
+
+      // Step 5: Render results
+      updateStep(5, 'active');
+      await sleep(300);
+      updateStep(5, 'done');
+
+      APP_STATE.analysis = analysis;
+      await sleep(500);
+      showResults(analysis);
+
+    } catch (err) {
+      console.error('Processing error:', err);
+      showToast(err.message || 'Something went wrong. Please try again.', 'error');
+      // Return to upload state
+      setTimeout(() => {
+        document.getElementById('processingState').style.display = 'none';
+        document.getElementById('uploadState').style.display = 'block';
+        resetProcessingSteps();
+      }, 2000);
+    }
   }
 
-  // ==================== RESULTS ====================
-  function showResults() {
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ==================== PDF.JS TEXT EXTRACTION ====================
+  async function extractPdfText(file) {
+    const pdfjsLib = window.pdfjsLib;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(item => item.str).join(' ');
+      fullText += pageText + '\n';
+    }
+    return fullText;
+  }
+
+  // ==================== CLAUDE API ANALYSIS ====================
+  async function analyzeReport(reportText) {
+    const res = await fetch('/.netlify/functions/parse-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reportText }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'Analysis failed. Please try again.');
+    }
+
+    return await res.json();
+  }
+
+  // ==================== RENDER RESULTS ====================
+  function showResults(data) {
     document.getElementById('processingState').style.display = 'none';
     document.getElementById('resultsState').style.display = 'block';
 
@@ -1213,184 +1185,155 @@
       year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
 
-    // Hide pro banner for pro users
     if (APP_STATE.isPro) {
       document.getElementById('proBanner').style.display = 'none';
     }
 
-    // Trigger confetti for first upload badge
-    setTimeout(triggerConfetti, 500);
+    // Credit Health Score
+    const score = data.creditHealthScore || 0;
+    document.getElementById('scoreNum').textContent = score;
+    document.getElementById('scoreLabel').textContent = (data.rank || 'Credit Rookie');
+    // Animate ring (339 circumference, offset = 339 - (score/1000 * 339))
+    const offset = 339 - (Math.min(score, 1000) / 1000 * 339);
+    const ringEl = document.getElementById('scoreRing');
+    // Color based on score
+    const ringColor = score < 300 ? '#DC2626' : score < 500 ? '#D97706' : score < 700 ? '#F59E0B' : '#059669';
+    ringEl.style.stroke = ringColor;
+    document.getElementById('scoreNum').style.color = ringColor;
+    setTimeout(() => { ringEl.style.strokeDashoffset = offset; }, 300);
 
-    // Animate score ring
-    setTimeout(() => {
-      document.getElementById('scoreRing').style.strokeDashoffset = '220';
-    }, 300);
+    // Report Overview
+    const summary = data.summary || {};
+    document.getElementById('reportOverview').innerHTML = `
+      <div class="stat-row"><span>Total Accounts</span> <span class="stat-value">${summary.totalAccounts || '—'}</span></div>
+      <div class="stat-row"><span>Open Accounts</span> <span class="stat-value">${summary.openAccounts || '—'}</span></div>
+      <div class="stat-row"><span>Closed Accounts</span> <span class="stat-value">${summary.closedAccounts || '—'}</span></div>
+      <div class="stat-row"><span>Total Balance</span> <span class="stat-value">${summary.totalBalance || '—'}</span></div>
+      <div class="stat-row"><span>Hard Inquiries</span> <span class="stat-value ${(summary.hardInquiries || 0) > 3 ? 'yellow' : ''}">${summary.hardInquiries || '—'}</span></div>
+      ${summary.creditScore ? `<div class="stat-row"><span>Credit Score</span> <span class="stat-value">${summary.creditScore} (${summary.creditScoreLabel || ''})</span></div>` : ''}
+    `;
+
+    // Issue Breakdown
+    const negs = data.negativeItems || [];
+    const highCount = negs.filter(n => n.impact === 'high').length;
+    const medCount = negs.filter(n => n.impact === 'medium').length;
+    const lowCount = negs.filter(n => n.impact === 'low').length;
+    const totalGain = negs.reduce((sum, n) => sum + (n.impactScore || 0), 0);
+
+    document.getElementById('issueBreakdown').innerHTML = `
+      <div class="stat-row"><span>🔴 High Impact</span> <span class="stat-value red">${highCount}</span></div>
+      <div class="stat-row"><span>🟡 Medium Impact</span> <span class="stat-value yellow">${medCount}</span></div>
+      <div class="stat-row"><span>🟢 Low Impact</span> <span class="stat-value green">${lowCount}</span></div>
+      <div class="stat-row"><span>Estimated Score Gain</span> <span class="stat-value green">+${totalGain} pts</span></div>
+      <div class="stat-row"><span>Dispute Priority</span> <span class="stat-value ${highCount > 0 ? 'red' : 'green'}">${highCount > 0 ? 'High' : medCount > 0 ? 'Medium' : 'Low'}</span></div>
+    `;
+
+    // Negative Items
+    document.getElementById('negCount').textContent = negs.length + ' items found';
+    const negHtml = negs.map(item => {
+      const hasLetter = (data.disputeLetters || []).find(l => l.itemId === item.id);
+      const actionBtn = hasLetter
+        ? `<button class="neg-action" onclick="showDisputeLetter('${item.id}')">Generate Letter ✉️</button>`
+        : `<button class="neg-action" onclick="scrollToRecs()">See Fix →</button>`;
+
+      return `
+        <div class="neg-item">
+          <div class="neg-item-info">
+            <h4>${escHtml(item.creditor)} — ${escHtml(item.type)}</h4>
+            <p>${escHtml(item.details)}</p>
+          </div>
+          <span class="neg-impact ${item.impact}">${item.impact === 'high' ? 'High Impact' : item.impact === 'medium' ? 'Medium' : 'Low Impact'}</span>
+          ${actionBtn}
+        </div>
+      `;
+    }).join('');
+    document.getElementById('negItemsList').innerHTML = negHtml || '<div style="padding:24px;text-align:center;color:var(--text-muted);">No negative items found — your report looks clean! 🎉</div>';
+
+    // Recommendations
+    const recs = data.recommendations || [];
+    const recIcons = { 1: '🎯', 2: '💌', 3: '📉', 4: '🏗️', 5: '💳', 6: '🔍' };
+    const recsHtml = recs.map((rec, i) => {
+      const aff = rec.affiliateHook && AFFILIATES[rec.affiliateHook];
+      const affStyle = rec.affiliateHook === 'kikoff' ? 'background:var(--success-light);border-color:rgba(5,150,105,0.15);'
+        : rec.affiliateHook === 'ava' ? 'background:var(--pro-gold-light);border-color:rgba(184,134,11,0.15);'
+        : '';
+
+      let affHtml = '';
+      if (aff) {
+        affHtml = `<a href="${aff.url}" target="_blank" rel="noopener sponsored" class="rec-affiliate">${aff.label}</a>`;
+        if (aff.pixel) affHtml += `<img height="0" width="0" src="${aff.pixel}" style="position:absolute;visibility:hidden;" border="0" />`;
+      }
+
+      return `
+        <div class="rec-card" ${affStyle ? `style="${affStyle}"` : ''}>
+          <div class="rec-icon">${recIcons[i + 1] || '💡'}</div>
+          <div class="rec-content">
+            <h4>${escHtml(rec.title)}${rec.estimatedGain ? ` <span style="color:var(--success);font-size:0.82rem;">${escHtml(rec.estimatedGain)}</span>` : ''}</h4>
+            <p>${escHtml(rec.description)}</p>
+            ${affHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
+    document.getElementById('recsList').innerHTML = recsHtml;
+
+    // Update gamification sidebar
+    updateGamification(data);
+
+    // Confetti on first parse
+    setTimeout(triggerConfetti, 500);
   }
 
-  // ==================== DISPUTE LETTERS ====================
-  const LETTERS = {
-    midland: {
-      title: 'Debt Validation Letter — Midland Credit Management',
-      content: `[Your Full Name]
-[Your Address]
-[City, State ZIP]
-[Date]
+  function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
 
-Midland Credit Management
-350 Camino De La Reina, Suite 100
-San Diego, CA 92108
+  function scrollToRecs() {
+    document.getElementById('recsList').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
-Re: Account #[ACCOUNT NUMBER]
-Alleged Original Creditor: AT&T
-Alleged Balance: $847.00
+  // ==================== GAMIFICATION UPDATE ====================
+  function updateGamification(data) {
+    const rank = data.rank || 'Credit Rookie';
+    const rankEmojis = { 'Credit Rookie': '🌱', 'Credit Builder': '🔨', 'Credit Warrior': '⚔️', 'Credit Champion': '🏆', 'Credit Master': '👑' };
+    const ranks = ['Credit Rookie', 'Credit Builder', 'Credit Warrior', 'Credit Champion', 'Credit Master'];
+    const rankIdx = ranks.indexOf(rank);
+    const progress = Math.max(20, ((rankIdx + 1) / ranks.length) * 100);
 
-To Whom It May Concern:
-
-I am writing to dispute the above-referenced account that appears on my credit report. Pursuant to the Fair Debt Collection Practices Act (FDCPA), 15 U.S.C. § 1692g, I am requesting validation of this debt.
-
-Please provide the following:
-
-1. The original signed agreement or contract bearing my signature
-2. A complete payment history from the original creditor
-3. Proof that you are licensed to collect debts in my state
-4. Verification that this debt has not exceeded the statute of limitations
-5. The name and address of the original creditor
-
-Until this debt is properly validated, I demand that you:
-
-• Cease all collection activity regarding this account
-• Remove this account from all three credit bureau reports (Equifax, Experian, TransUnion)
-• Cease reporting this account to any credit reporting agency
-
-Under the FDCPA, you have 30 days to validate this debt. If you cannot provide the above documentation, this account must be permanently deleted from my credit reports.
-
-This letter is not an acknowledgment of this debt, nor is it a promise to pay. I reserve all rights under the FCRA and FDCPA.
-
-Sincerely,
-
-[Your Signature]
-[Your Printed Name]
-
-Sent via Certified Mail, Return Receipt Requested
-Tracking #: _______________`
-    },
-    capitalone: {
-      title: 'Goodwill Adjustment Letter — Capital One',
-      content: `[Your Full Name]
-[Your Address]
-[City, State ZIP]
-[Date]
-
-Capital One
-Attn: Customer Relations
-P.O. Box 30285
-Salt Lake City, UT 84130
-
-Re: Account #****4521
-Request for Goodwill Adjustment
-
-Dear Capital One Customer Relations,
-
-I am a loyal Capital One cardholder and I am writing to respectfully request a goodwill adjustment to remove the 60-day late payment reported on my account in November 2024.
-
-I want to take full responsibility for this late payment. During that period, [briefly explain circumstance — e.g., I experienced a temporary financial hardship due to unexpected medical expenses / job transition / family emergency]. This was an isolated incident and does not reflect my typical payment behavior.
-
-As you can see from my account history, I have maintained consistent on-time payments both before and after this incident. I have since set up automatic payments to ensure this never happens again.
-
-This late payment is significantly impacting my credit score and my ability to [qualify for a mortgage / refinance / achieve my financial goals]. I would be incredibly grateful if Capital One would consider removing this late payment mark as a gesture of goodwill.
-
-I value my relationship with Capital One and look forward to remaining a loyal customer for years to come.
-
-Thank you for your time and consideration.
-
-Sincerely,
-
-[Your Signature]
-[Your Printed Name]
-[Phone Number]
-[Email Address]`
-    },
-    portfolio: {
-      title: 'Debt Validation Letter — Portfolio Recovery Associates',
-      content: `[Your Full Name]
-[Your Address]
-[City, State ZIP]
-[Date]
-
-Portfolio Recovery Associates, LLC
-120 Corporate Blvd, Suite 100
-Norfolk, VA 23502
-
-Re: Account #[ACCOUNT NUMBER]
-Alleged Original Creditor: Verizon
-Alleged Balance: $312.00
-
-To Whom It May Concern:
-
-I am writing to dispute the validity of the above-referenced debt. Under the Fair Debt Collection Practices Act (FDCPA), 15 U.S.C. § 1692g, I am formally requesting that you validate this debt.
-
-Please provide:
-
-1. Proof that I owe this specific amount to your company
-2. The original signed service agreement with Verizon bearing my signature
-3. A complete and itemized accounting of the alleged balance
-4. Documentation showing the chain of assignment/purchase of this debt
-5. Proof that you are licensed to collect debts in my state of residence
-
-Please note: Under the FCRA, 15 U.S.C. § 1681, any information reported to credit bureaus must be 100% accurate and verifiable. If you cannot substantiate this debt with the documentation requested above, you are required to delete this tradeline from all credit reporting agencies.
-
-I am also sending a copy of this dispute directly to Equifax, Experian, and TransUnion.
-
-Do not contact me by phone. All future communication must be in writing.
-
-Sincerely,
-
-[Your Signature]
-[Your Printed Name]
-
-CC: Equifax, Experian, TransUnion
-Sent via Certified Mail, Return Receipt Requested`
-    },
-    chase: {
-      title: 'Goodwill Letter — Chase',
-      content: `[Your Full Name]
-[Your Address]
-[City, State ZIP]
-[Date]
-
-Chase Bank
-Attn: Executive Office
-P.O. Box 15298
-Wilmington, DE 19850
-
-Re: Account #****8833
-Request for Goodwill Late Payment Removal
-
-Dear Chase Customer Relations,
-
-I am writing to request a goodwill adjustment for the 30-day late payment reported on my account in June 2024.
-
-I have been a Chase customer for [X years] and have always valued the relationship. The late payment was caused by [brief, honest explanation — e.g., an administrative error with my autopay / a temporary family emergency / a billing address change that caused me to miss the statement].
-
-Since then, my account has been current and in good standing. I have taken steps to prevent this from recurring, including enrolling in autopay and setting up payment reminders.
-
-This single late payment is impacting my creditworthiness as I work toward [specific goal — e.g., purchasing a home / refinancing my student loans]. I respectfully ask that Chase consider removing this mark from my credit report as a one-time courtesy.
-
-Thank you for considering this request. I look forward to continuing as a loyal Chase customer.
-
-Best regards,
-
-[Your Signature]
-[Your Printed Name]`
+    const gwRank = document.querySelector('.gw-rank');
+    if (gwRank) {
+      gwRank.querySelector('.gw-rank-emoji').textContent = rankEmojis[rank] || '🌱';
+      gwRank.querySelector('.gw-rank-name').textContent = rank;
+      gwRank.querySelector('.gw-rank-next').textContent = rankIdx < ranks.length - 1 ? 'Next: ' + ranks[rankIdx + 1] : 'Max rank achieved!';
     }
-  };
+    const gwFill = document.querySelector('.gw-progress-fill');
+    if (gwFill) gwFill.style.width = progress + '%';
+    const gwLabel = document.querySelector('.gw-progress-label');
+    if (gwLabel) gwLabel.textContent = (rankIdx + 1) + '/' + ranks.length + ' milestones completed';
+  }
 
-  function showDisputeLetter(key) {
-    const letter = LETTERS[key];
-    if (!letter) return;
+  // ==================== DISPUTE LETTERS (DYNAMIC) ====================
+  APP_STATE.disputeLetters = {};
 
-    document.getElementById('modalTitle').textContent = letter.title;
-    document.getElementById('letterContent').textContent = letter.content;
+  function showDisputeLetter(itemId) {
+    const analysis = APP_STATE.analysis;
+    if (!analysis) return;
+
+    const letter = (analysis.disputeLetters || []).find(l => l.itemId === itemId);
+    if (!letter) {
+      showToast('No dispute letter available for this item.', 'info');
+      return;
+    }
+
+    if (!APP_STATE.isPro) {
+      showUpgradeModal();
+      showToast('Dispute letters are a Pro feature. Upgrade to unlock.', 'info');
+      return;
+    }
+
+    document.getElementById('modalTitle').textContent = letter.letterType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + ' — ' + letter.recipientName;
+    document.getElementById('letterContent').textContent = letter.letterBody;
     document.getElementById('letterModal').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -1407,11 +1350,6 @@ Best regards,
       btn.textContent = '✅ Copied!';
       setTimeout(() => btn.textContent = '📋 Copy to Clipboard', 2000);
     });
-  }
-
-  function showRec(type) {
-    const section = document.querySelector('[style*="margin-bottom:24px"]');
-    if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // ==================== CONFETTI ====================
@@ -1436,15 +1374,19 @@ Best regards,
   }
 
   // ==================== RESET ====================
-  function resetApp() {
-    document.getElementById('resultsState').style.display = 'none';
-    document.getElementById('uploadState').style.display = 'block';
-    document.getElementById('fileInput').value = '';
-    // Reset processing steps
+  function resetProcessingSteps() {
     document.querySelectorAll('.processing-step').forEach(s => {
       s.classList.remove('active', 'done');
       s.querySelector('.step-indicator').textContent = s.id.replace('step', '');
     });
+  }
+
+  function resetApp() {
+    document.getElementById('resultsState').style.display = 'none';
+    document.getElementById('uploadState').style.display = 'block';
+    document.getElementById('fileInput').value = '';
+    APP_STATE.analysis = null;
+    resetProcessingSteps();
   }
 
   // Close modal on escape

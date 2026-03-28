@@ -4,7 +4,6 @@
 // Environment variables needed:
 //   STRIPE_SECRET_KEY = sk_live_...
 //
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 exports.handler = async (event) => {
   const headers = {
@@ -21,7 +20,16 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: 'Payment system not configured' }),
+    };
+  }
+
   try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     const { sessionId } = JSON.parse(event.body || '{}');
 
     if (!sessionId) {
