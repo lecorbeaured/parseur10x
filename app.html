@@ -1119,6 +1119,45 @@
     font-weight: 600;
   }
 
+  /* ==================== UNLOCK BANNER ==================== */
+  .unlock-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(5,150,105,0.3);
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .unlock-banner.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  .unlock-banner-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    animation: unlockBounce 0.6s ease 0.3s;
+  }
+  @keyframes unlockBounce {
+    0%, 100% { transform: scale(1); }
+    40% { transform: scale(1.3); }
+    70% { transform: scale(0.9); }
+  }
+  .unlock-banner-text {
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .unlock-banner-text strong {
+    display: block;
+    font-size: 1.05rem;
+    margin-bottom: 2px;
+  }
+
   /* Toast Notifications */
   .toast {
     position: fixed;
@@ -1413,13 +1452,48 @@
   const STRIPE_PRICE_ID = 'price_1TFowO5slFMmVhuxk83h7MTW';
 
   // ==================== PRO STATUS CHECK ====================
-  function activatePro() {
+  function activatePro(showUnlockAnimation = false) {
     APP_STATE.isPro = true;
     document.getElementById('planBadge').textContent = 'PRO';
     document.getElementById('planBadge').classList.add('pro');
     document.getElementById('upgradeBtn').style.display = 'none';
-    // Persist pro status locally
     try { localStorage.setItem('parseur10x_pro', 'true'); } catch(e) {}
+
+    // If we have analysis data, re-render results with everything unlocked
+    if (APP_STATE.analysis && document.getElementById('resultsState').style.display === 'block') {
+      const negsCount = (APP_STATE.analysis.negativeItems || []).length;
+      const recsCount = (APP_STATE.analysis.recommendations || []).length;
+      const unlockedItems = Math.max(0, negsCount - 1);
+      const unlockedRecs = Math.max(0, recsCount - 1);
+
+      showResults(APP_STATE.analysis);
+
+      if (showUnlockAnimation && (unlockedItems > 0 || unlockedRecs > 0)) {
+        showUnlockBanner(unlockedItems, unlockedRecs);
+      }
+    }
+  }
+
+  function showUnlockBanner(items, recs) {
+    const banner = document.createElement('div');
+    banner.className = 'unlock-banner';
+    banner.innerHTML = `
+      <div class="unlock-banner-icon">🔓</div>
+      <div class="unlock-banner-text">
+        <strong>Pro Unlocked!</strong>
+        You now have access to ${items > 0 ? items + ' more negative item' + (items > 1 ? 's' : '') : ''}${items > 0 && recs > 0 ? ' and ' : ''}${recs > 0 ? recs + ' more recommendation' + (recs > 1 ? 's' : '') : ''}, plus dispute letters, Credit Quest, and unlimited parses.
+      </div>
+    `;
+    
+    const resultsHeader = document.querySelector('.results-header');
+    if (resultsHeader) {
+      resultsHeader.after(banner);
+      requestAnimationFrame(() => banner.classList.add('show'));
+      setTimeout(() => {
+        banner.classList.remove('show');
+        setTimeout(() => banner.remove(), 400);
+      }, 6000);
+    }
   }
 
   function deactivatePro() {
@@ -1437,6 +1511,14 @@
     }
   } catch(e) {}
 
+  // Restore analysis from sessionStorage (survives Stripe redirect)
+  try {
+    const savedAnalysis = sessionStorage.getItem('parseur10x_analysis');
+    if (savedAnalysis) {
+      APP_STATE.analysis = JSON.parse(savedAnalysis);
+    }
+  } catch(e) {}
+
   // Handle return from Stripe Checkout
   (function handleCheckoutReturn() {
     const params = new URLSearchParams(window.location.search);
@@ -1448,12 +1530,22 @@
       verifyCheckoutSession(sessionId);
       // Clean URL without reload
       window.history.replaceState({}, '', '/app.html');
+      // If we have saved analysis, jump straight to results
+      if (APP_STATE.analysis) {
+        document.getElementById('uploadState').style.display = 'none';
+        document.getElementById('resultsState').style.display = 'block';
+      }
     } else if (canceled) {
       showToast('Checkout canceled — no charges were made.', 'warning');
       window.history.replaceState({}, '', '/app.html');
+      // Return to results if analysis exists
+      if (APP_STATE.analysis) {
+        document.getElementById('uploadState').style.display = 'none';
+        document.getElementById('resultsState').style.display = 'block';
+        showResults(APP_STATE.analysis);
+      }
     } else if (params.get('plan') === 'pro') {
-      // Direct plan=pro param (legacy/manual)
-      activatePro();
+      activatePro(true);
       window.history.replaceState({}, '', '/app.html');
     }
   })();
@@ -1468,7 +1560,7 @@
       const data = await res.json();
 
       if (data.paid) {
-        activatePro();
+        activatePro(true);
         showToast('Welcome to Pro! You now have full access.', 'success');
         setTimeout(triggerConfetti, 300);
       } else {
@@ -1477,7 +1569,7 @@
     } catch (err) {
       console.error('Session verification error:', err);
       // Optimistic activation — payment likely went through if we have a session_id
-      activatePro();
+      activatePro(true);
       showToast('Welcome to Pro!', 'success');
       setTimeout(triggerConfetti, 300);
     }
@@ -1699,6 +1791,8 @@
       updateStep(5, 'done');
 
       APP_STATE.analysis = analysis;
+      // Persist analysis so it survives Stripe redirect
+      try { sessionStorage.setItem('parseur10x_analysis', JSON.stringify(analysis)); } catch(e) {}
       await sleep(500);
 
       // Pro users or already-gated users skip email gate
@@ -2145,7 +2239,10 @@
     document.getElementById('uploadState').style.display = 'block';
     document.getElementById('fileInput').value = '';
     APP_STATE.analysis = null;
+    try { sessionStorage.removeItem('parseur10x_analysis'); } catch(e) {}
     resetProcessingSteps();
+    // Remove any unlock banners
+    document.querySelectorAll('.unlock-banner').forEach(b => b.remove());
   }
 
   // Close modal on escape
