@@ -659,6 +659,136 @@
     100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
   }
 
+  /* Email Gate Modal */
+  .email-gate-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(26,29,43,0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1001;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .email-gate-overlay.open { display: flex; }
+  .email-gate-modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    max-width: 440px;
+    width: 100%;
+    padding: 40px 32px;
+    text-align: center;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+    animation: egSlideUp 0.4s ease;
+  }
+  @keyframes egSlideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .email-gate-icon { font-size: 3rem; margin-bottom: 16px; }
+  .email-gate-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+  .email-gate-sub {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .email-gate-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 28px;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-light);
+  }
+  .eg-stat { text-align: center; }
+  .eg-stat-num {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .eg-stat-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .eg-stat-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--border-light);
+  }
+  .email-gate-field {
+    margin-bottom: 16px;
+  }
+  .email-gate-field input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--text-primary);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-align: center;
+  }
+  .email-gate-field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-glow);
+  }
+  .email-gate-field input::placeholder {
+    color: var(--text-muted);
+  }
+  .email-gate-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+  }
+  .email-gate-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+  }
+  .email-gate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .email-gate-privacy {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 14px;
+  }
+  .email-gate-error {
+    color: var(--danger);
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-top: 8px;
+    display: none;
+  }
+
   /* Toast Notifications */
   .toast {
     position: fixed;
@@ -905,6 +1035,32 @@
 <!-- Confetti Container -->
 <div class="confetti-container" id="confettiContainer"></div>
 
+<!-- ==================== EMAIL GATE MODAL ==================== -->
+<div class="email-gate-overlay" id="emailGate">
+  <div class="email-gate-modal">
+    <div class="email-gate-icon">🛡️</div>
+    <h2 class="email-gate-title">Your Report Is Ready</h2>
+    <p class="email-gate-sub">We found items on your report. Enter your email to unlock your personalized analysis.</p>
+    <div class="email-gate-stats">
+      <div class="eg-stat">
+        <div class="eg-stat-num" id="egItemCount">—</div>
+        <div class="eg-stat-label">Items Flagged</div>
+      </div>
+      <div class="eg-stat-divider"></div>
+      <div class="eg-stat">
+        <div class="eg-stat-num" id="egScoreGain">—</div>
+        <div class="eg-stat-label">Potential Gain</div>
+      </div>
+    </div>
+    <div class="email-gate-field">
+      <input type="email" id="egEmail" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <button class="email-gate-btn" id="egSubmitBtn" onclick="submitEmailGate()">See My Results →</button>
+    <p class="email-gate-privacy">🔒 No spam. We only send your analysis results and credit tips.</p>
+    <div id="egError" class="email-gate-error"></div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
@@ -913,7 +1069,15 @@
     isPro: false,
     fileName: '',
     parsedAt: null,
+    emailCaptured: false,
   };
+
+  // Check if email was previously captured
+  try {
+    if (localStorage.getItem('parseur10x_email')) {
+      APP_STATE.emailCaptured = true;
+    }
+  } catch(e) {}
 
   const STRIPE_PK = 'pk_live_51TFKH15slFMmVhuxVLAxzKVymPgrgxCjk4ztrmwCUYkqjgBHPFr5QfwhnbtrCkTDucLQyRgVTuSxDZbYkDtkjFhk00i3LwJXql';
   const STRIPE_PRICE_ID = 'price_1TFowO5slFMmVhuxk83h7MTW';
@@ -1042,6 +1206,73 @@
     }, 4000);
   }
 
+  // ==================== EMAIL GATE ====================
+  function showEmailGate(analysis) {
+    // Populate teaser stats
+    const negs = analysis.negativeItems || [];
+    const totalGain = negs.reduce((sum, n) => sum + (n.impactScore || 0), 0);
+    document.getElementById('egItemCount').textContent = negs.length;
+    document.getElementById('egScoreGain').textContent = '+' + totalGain + ' pts';
+
+    // Show the gate
+    document.getElementById('processingState').style.display = 'none';
+    document.getElementById('emailGate').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // Focus email input
+    setTimeout(() => document.getElementById('egEmail').focus(), 400);
+
+    // Enter key submits
+    document.getElementById('egEmail').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitEmailGate();
+    });
+  }
+
+  async function submitEmailGate() {
+    const emailInput = document.getElementById('egEmail');
+    const email = emailInput.value.trim();
+    const errEl = document.getElementById('egError');
+    const btn = document.getElementById('egSubmitBtn');
+
+    // Validate
+    if (!email) {
+      errEl.textContent = 'Please enter your email address.';
+      errEl.style.display = 'block';
+      emailInput.focus();
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errEl.textContent = 'Please enter a valid email address.';
+      errEl.style.display = 'block';
+      emailInput.focus();
+      return;
+    }
+
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Unlocking...';
+
+    // Store email locally
+    APP_STATE.emailCaptured = true;
+    try { localStorage.setItem('parseur10x_email', email); } catch(e) {}
+
+    // Send to backend (non-blocking — don't wait for response)
+    fetch('/.netlify/functions/capture-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, source: 'email_gate', fileName: APP_STATE.fileName }),
+    }).catch(() => {}); // Fail silently — email is already stored locally
+
+    // Close gate and show results
+    await sleep(600);
+    document.getElementById('emailGate').classList.remove('open');
+    document.body.style.overflow = '';
+    btn.disabled = false;
+    btn.textContent = 'See My Results →';
+
+    showResults(APP_STATE.analysis);
+  }
+
   // ==================== AFFILIATE LINKS ====================
   const AFFILIATES = {
     kikoff: { url: 'https://kikoff.pxf.io/c/7007975/2344833/14994', label: 'Try Kikoff — $0/mo credit builder →', pixel: 'https://imp.pxf.io/i/7007975/2344833/14994' },
@@ -1125,7 +1356,13 @@
 
       APP_STATE.analysis = analysis;
       await sleep(500);
-      showResults(analysis);
+
+      // Pro users or already-gated users skip email gate
+      if (APP_STATE.isPro || APP_STATE.emailCaptured) {
+        showResults(analysis);
+      } else {
+        showEmailGate(analysis);
+      }
 
     } catch (err) {
       console.error('Processing error:', err);
