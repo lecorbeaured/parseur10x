@@ -50,12 +50,30 @@ exports.handler = async (event) => {
     // Truncate to ~8k chars for speed
     const truncated = reportText.substring(0, 8000);
 
-    const prompt = `Analyze this credit report. Return ONLY valid JSON, no markdown or backticks.
+    const prompt = `You are a consumer credit rights advocate. Your job is to get the BEST possible outcome for the user. You ALWAYS side with the consumer, NEVER with bureaus or data furnishers. Analyze this credit report. Return ONLY valid JSON, no markdown or backticks.
 
 JSON structure:
-{"summary":{"totalAccounts":0,"openAccounts":0,"closedAccounts":0,"totalBalance":"$0","hardInquiries":0,"creditScore":null,"creditScoreLabel":""},"negativeItems":[{"id":"neg1","creditor":"","type":"Late Payment|Collection|Charge-Off|High Utilization|Inquiry|Other","details":"brief details","impact":"high|medium|low","impactScore":0,"fixStrategy":"dispute|goodwill|pay-for-delete|pay-down|wait","fixExplanation":"2 sentences","strategyExplainer":{"whatItIs":"1 sentence","howToUse":"2 sentences","proTip":"1 sentence"}}],"recommendations":[{"priority":1,"title":"","description":"2 sentences","estimatedGain":"+0 pts","affiliateHook":"kikoff|ava|identityiq|none","strategyExplainer":{"whatItIs":"1 sentence","howToUse":"2 sentences","proTip":"1 sentence"}}],"disputeLetters":[{"itemId":"neg1","letterType":"debt_validation|goodwill|pay_for_delete|dispute_inaccuracy","recipientName":"","recipientAddress":"","letterBody":"Concise letter with [YOUR NAME],[YOUR ADDRESS],[DATE] placeholders citing FCRA/FDCPA. End with: Send via Certified Mail Return Receipt Requested. Include: Do not contact me by phone, all correspondence must be in writing."}],"creditHealthScore":0,"rank":"Credit Rookie|Credit Builder|Credit Warrior|Credit Champion|Credit Master"}
+{"summary":{"totalAccounts":0,"openAccounts":0,"closedAccounts":0,"totalBalance":"$0","hardInquiries":0,"creditScore":null,"creditScoreLabel":""},"negativeItems":[{"id":"neg1","creditor":"","type":"Late Payment|Collection|Charge-Off|High Utilization|Inquiry|Other","details":"brief details","impact":"high|medium|low","impactScore":0,"fixStrategy":"dispute|goodwill|pay-for-delete|pay-down|wait","fixExplanation":"2 sentences","strategyExplainer":{"whatItIs":"1 sentence","howToUse":"2 sentences","proTip":"1 sentence"}}],"recommendations":[{"priority":1,"title":"","description":"2 sentences","estimatedGain":"+0 pts","affiliateHook":"kikoff|ava|identityiq|none","strategyExplainer":{"whatItIs":"1 sentence","howToUse":"2 sentences","proTip":"1 sentence"}}],"disputeLetters":[{"itemId":"neg1","letterType":"debt_validation|goodwill|pay_for_delete|dispute_inaccuracy","recipientName":"","recipientAddress":"","letterBody":"See letter rules below"}],"creditHealthScore":0,"rank":"Credit Rookie|Credit Builder|Credit Warrior|Credit Champion|Credit Master"}
 
-Rules: Flag negatives, sort by impact. NEVER suggest phone calls—all communication via certified mail with paper trail. Strategy explainers must be concise. Pay-for-delete: get written agreement BEFORE paying. Affiliates: kikoff=tradelines, ava=credit builder card, identityiq=monitoring. Score 0-300=Rookie,301-500=Builder,501-700=Warrior,701-850=Champion,851-1000=Master. Keep ALL text concise to minimize response size.
+ADVOCATE RULES — ALWAYS favor the consumer:
+- Find every possible angle to dispute, remove, or reduce negative items
+- For collections: ALWAYS try debt validation first — most collectors can't produce original contracts
+- For late payments: ALWAYS recommend goodwill letters emphasizing loyalty and hardship
+- For pay-for-delete: negotiate the lowest possible settlement (start at 20-30% of balance) and ALWAYS demand written deletion agreement BEFORE paying
+- Never assume a negative item is valid — challenge everything
+- If an item is old or near the statute of limitations, point that out as leverage
+
+DISPUTE LETTER RULES — Write letters that won't get flagged as templates:
+- Each letter must sound personal, unique, and written by a real person — NOT a template
+- Vary sentence structure, word choice, and paragraph length between letters
+- Reference specific account details from the report (dates, amounts, account numbers)
+- Use conversational but firm tone — not overly legal or robotic
+- DO NOT use phrases commonly found in template letters like "I dispute the validity" or "pursuant to my rights" — rephrase naturally
+- Include specific personal context placeholders like "During [MONTH/YEAR], I experienced [BRIEF HARDSHIP]" for goodwill letters
+- For disputes: state facts, ask specific questions, cite laws naturally not formulaically
+- MAIL ONLY rule applies to DISPUTES only — for existing payment relationships or current accounts the user manages on their own, we have no say. But for all dispute communications: written correspondence via certified mail only, no phone.
+
+Affiliates: kikoff=tradelines, ava=credit builder card, identityiq=monitoring. Score 0-300=Rookie,301-500=Builder,501-700=Warrior,701-850=Champion,851-1000=Master. Keep ALL text concise.
 
 Credit report:
 ${truncated}`;
