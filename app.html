@@ -791,6 +791,83 @@
     display: none;
   }
 
+  /* ==================== STRATEGY EXPLAINERS ==================== */
+  .strategy-explainer {
+    margin-top: 10px;
+    border-top: 1px solid var(--border-light);
+    padding-top: 10px;
+  }
+  .strategy-toggle {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .strategy-toggle:hover { text-decoration: underline; }
+  .strategy-toggle .arrow {
+    transition: transform 0.2s;
+    font-size: 0.65rem;
+  }
+  .strategy-toggle.open .arrow { transform: rotate(90deg); }
+  .strategy-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .strategy-body.open { max-height: 400px; }
+  .strategy-body-inner {
+    padding-top: 10px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .strategy-section {
+    margin-bottom: 8px;
+  }
+  .strategy-section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  .strategy-section p {
+    margin: 0;
+    font-size: 0.82rem;
+  }
+  .strategy-protip {
+    background: var(--warning-light);
+    border-left: 3px solid var(--warning);
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    margin-top: 8px;
+  }
+  .strategy-protip strong {
+    color: var(--warning);
+  }
+  .paper-trail-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--success);
+    background: var(--success-light);
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+  }
+
   /* ==================== AFFILIATE CTA CARDS ==================== */
   .aff-cta-card {
     display: flex;
@@ -1706,11 +1783,39 @@
               : `<button class="neg-action pro-only" onclick="showUpgradeModal()">🔒 Pro: Generate Letter</button>`)
             : `<button class="neg-action" onclick="scrollToRecs()">See Fix →</button>`;
 
+          const se = item.strategyExplainer;
+          const explainerHtml = se ? `
+            <div class="strategy-explainer">
+              <button class="strategy-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+                <span class="arrow">▶</span> What is "${escHtml(item.fixStrategy.replace(/-/g,' '))}" and how to use it
+              </button>
+              <div class="strategy-body">
+                <div class="strategy-body-inner">
+                  <div class="strategy-section">
+                    <div class="strategy-section-label">What It Is</div>
+                    <p>${escHtml(se.whatItIs)}</p>
+                  </div>
+                  <div class="strategy-section">
+                    <div class="strategy-section-label">How To Use It</div>
+                    <p>${escHtml(se.howToUse)}</p>
+                  </div>
+                  <div class="strategy-protip">
+                    <strong>Pro Tip:</strong> ${escHtml(se.proTip)}
+                  </div>
+                  <div class="paper-trail-badge">📬 Always use certified mail — build your paper trail</div>
+                </div>
+              </div>
+            </div>
+          ` : '';
+
           negHtml += `
-            <div class="neg-item">
+            <div class="neg-item" style="flex-wrap:wrap;">
               <div class="neg-item-info">
                 <h4>${escHtml(item.creditor)} — ${escHtml(item.type)}</h4>
                 <p>${escHtml(item.details)}</p>
+                <p style="font-size:0.8rem;color:var(--accent);margin-top:4px;font-weight:600;">Strategy: ${escHtml(item.fixStrategy.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()))}</p>
+                <p style="font-size:0.82rem;color:var(--text-secondary);margin-top:2px;">${escHtml(item.fixExplanation)}</p>
+                ${explainerHtml}
               </div>
               <span class="neg-impact ${item.impact}">${item.impact === 'high' ? 'High Impact' : item.impact === 'medium' ? 'Medium' : 'Low Impact'}</span>
               ${actionBtn}
@@ -1780,6 +1885,29 @@
             <div class="rec-content">
               <h4>${escHtml(rec.title)}${rec.estimatedGain ? ` <span style="color:var(--success);font-size:0.82rem;">${escHtml(rec.estimatedGain)}</span>` : ''}</h4>
               <p>${escHtml(rec.description)}</p>
+              ${rec.strategyExplainer ? `
+                <div class="strategy-explainer">
+                  <button class="strategy-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+                    <span class="arrow">▶</span> Learn more about this strategy
+                  </button>
+                  <div class="strategy-body">
+                    <div class="strategy-body-inner">
+                      <div class="strategy-section">
+                        <div class="strategy-section-label">What It Is</div>
+                        <p>${escHtml(rec.strategyExplainer.whatItIs)}</p>
+                      </div>
+                      <div class="strategy-section">
+                        <div class="strategy-section-label">How To Use It</div>
+                        <p>${escHtml(rec.strategyExplainer.howToUse)}</p>
+                      </div>
+                      <div class="strategy-protip">
+                        <strong>Pro Tip:</strong> ${escHtml(rec.strategyExplainer.proTip)}
+                      </div>
+                      <div class="paper-trail-badge">📬 Always use certified mail — build your paper trail</div>
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
               ${affHtml}
             </div>
           </div>
