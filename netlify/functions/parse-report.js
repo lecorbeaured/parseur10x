@@ -93,9 +93,19 @@ ${truncated}`;
 
     const data = await response.json();
     const rawText = data.content?.[0]?.text || '';
+    const stopReason = data.stop_reason || 'unknown';
+
+    console.log('Claude stop_reason:', stopReason, 'Response length:', rawText.length);
+    console.log('Raw response first 300:', rawText.substring(0, 300));
 
     // Parse the JSON response, stripping any markdown fences if present
-    const cleaned = rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    let cleaned = rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    
+    // Sometimes Claude wraps in extra text before/after JSON
+    const jsonStart = cleaned.indexOf('{');
+    if (jsonStart > 0) cleaned = cleaned.substring(jsonStart);
+    const jsonEnd = cleaned.lastIndexOf('}');
+    if (jsonEnd > 0 && jsonEnd < cleaned.length - 1) cleaned = cleaned.substring(0, jsonEnd + 1);
     
     let parsed;
     try {
@@ -134,7 +144,7 @@ ${truncated}`;
         return {
           statusCode: 502,
           headers,
-          body: JSON.stringify({ error: 'Failed to parse analysis results. Please try again.' }),
+          body: JSON.stringify({ error: 'Failed to parse analysis results. Please try again.', debug: rawText.substring(0, 200), stopReason }),
         };
       }
     }
