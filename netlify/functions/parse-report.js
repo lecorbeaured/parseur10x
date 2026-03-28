@@ -53,23 +53,9 @@ exports.handler = async (event) => {
     const prompt = `Analyze this credit report. Return ONLY valid JSON, no markdown or backticks.
 
 JSON structure:
-{"summary":{"totalAccounts":0,"openAccounts":0,"closedAccounts":0,"totalBalance":"$0","hardInquiries":0,"creditScore":null,"creditScoreLabel":""},"negativeItems":[{"id":"neg1","creditor":"","type":"Late Payment|Collection|Charge-Off|High Utilization|Inquiry|Other","details":"","impact":"high|medium|low","impactScore":0,"fixStrategy":"dispute|goodwill|pay-for-delete|pay-down|wait","fixExplanation":"","strategyExplainer":{"whatItIs":"1-2 sentence definition of this strategy","howToUse":"2-3 sentences on the most powerful way to execute this strategy","proTip":"1 sentence expert tip that most people miss"}}],"recommendations":[{"priority":1,"title":"","description":"","estimatedGain":"+0 pts","affiliateHook":"kikoff|ava|identityiq|none","strategyExplainer":{"whatItIs":"","howToUse":"","proTip":""}}],"disputeLetters":[{"itemId":"neg1","letterType":"debt_validation|goodwill|pay_for_delete|dispute_inaccuracy","recipientName":"","recipientAddress":"","letterBody":"Full dispute letter with [YOUR NAME],[YOUR ADDRESS],[DATE] placeholders citing FCRA/FDCPA laws"}],"creditHealthScore":0,"rank":"Credit Rookie|Credit Builder|Credit Warrior|Credit Champion|Credit Master"}
+{"summary":{"totalAccounts":0,"openAccounts":0,"closedAccounts":0,"totalBalance":"$0","hardInquiries":0,"creditScore":null,"creditScoreLabel":""},"negativeItems":[{"id":"neg1","creditor":"","type":"Late Payment|Collection|Charge-Off|High Utilization|Inquiry|Other","details":"brief details","impact":"high|medium|low","impactScore":0,"fixStrategy":"dispute|goodwill|pay-for-delete|pay-down|wait","fixExplanation":"2 sentences","strategyExplainer":{"whatItIs":"1 sentence","howToUse":"2 sentences","proTip":"1 sentence"}}],"recommendations":[{"priority":1,"title":"","description":"2 sentences","estimatedGain":"+0 pts","affiliateHook":"kikoff|ava|identityiq|none","strategyExplainer":{"whatItIs":"1 sentence","howToUse":"2 sentences","proTip":"1 sentence"}}],"disputeLetters":[{"itemId":"neg1","letterType":"debt_validation|goodwill|pay_for_delete|dispute_inaccuracy","recipientName":"","recipientAddress":"","letterBody":"Concise letter with [YOUR NAME],[YOUR ADDRESS],[DATE] placeholders citing FCRA/FDCPA. End with: Send via Certified Mail Return Receipt Requested. Include: Do not contact me by phone, all correspondence must be in writing."}],"creditHealthScore":0,"rank":"Credit Rookie|Credit Builder|Credit Warrior|Credit Champion|Credit Master"}
 
-Rules:
-- Flag late payments, collections, charge-offs, high utilization >30%, excess inquiries. Sort by impact.
-- Generate dispute letters for disputable items only.
-- Affiliate hooks: kikoff=tradeline building, ava=credit builder card, identityiq=monitoring.
-- Score 0-300=Rookie,301-500=Builder,501-700=Warrior,701-850=Champion,851-1000=Master.
-
-CRITICAL STRATEGY RULES:
-- NEVER suggest calling or phoning creditors or bureaus. ALL communication must be in writing via certified mail with return receipt requested. The user needs a paper trail.
-- Every dispute letter MUST include "Send via Certified Mail, Return Receipt Requested" and "Do not contact me by phone. All correspondence must be in writing."
-- strategyExplainer.whatItIs: Define the strategy clearly (e.g. "Debt validation forces a collector to prove they own your debt and have the right to collect it under FDCPA §1692g")
-- strategyExplainer.howToUse: The most powerful way to execute (e.g. "Send within 30 days of first contact. Use certified mail. If they can't validate within 30 days, they must remove the account and cease collection.")
-- strategyExplainer.proTip: Expert-level tip (e.g. "Request the original signed contract, not just a printout. Most debt buyers don't have it, which forces deletion.")
-- For goodwill letters: Explain this is asking for mercy, not demanding rights. Include tips on tone, timing, and what to emphasize.
-- For pay-for-delete: Explain getting the agreement IN WRITING before paying. Never pay without written deletion agreement.
-- For all strategies: Emphasize certified mail, paper trail, documentation of everything.
+Rules: Flag negatives, sort by impact. NEVER suggest phone calls—all communication via certified mail with paper trail. Strategy explainers must be concise. Pay-for-delete: get written agreement BEFORE paying. Affiliates: kikoff=tradelines, ava=credit builder card, identityiq=monitoring. Score 0-300=Rookie,301-500=Builder,501-700=Warrior,701-850=Champion,851-1000=Master. Keep ALL text concise to minimize response size.
 
 Credit report:
 ${truncated}`;
@@ -83,7 +69,7 @@ ${truncated}`;
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 5000,
+        max_tokens: 4000,
         messages: [
           { role: 'user', content: prompt }
         ],
