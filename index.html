@@ -1711,25 +1711,22 @@
 <script src="https://js.stripe.com/v3/"></script>
 <script>
   // Stripe configuration (replace with live keys when ready)
-  const STRIPE_PK = 'pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY';
-  const STRIPE_PRICE_ID = 'price_REPLACE_WITH_YOUR_PRICE_ID'; // $17/mo Pro plan
+  const STRIPE_PK = 'pk_live_51TFKH15slFMmVhuxVLAxzKVymPgrgxCjk4ztrmwCUYkqjgBHPFr5QfwhnbtrCkTDucLQyRgVTuSxDZbYkDtkjFhk00i3LwJXql';
+  const STRIPE_PRICE_ID = 'price_1TFowO5slFMmVhuxk83h7MTW'; // $17/mo Pro plan
   
   async function handleCheckout() {
     try {
       const stripe = Stripe(STRIPE_PK);
-      // In production, create a checkout session via your serverless function:
-      // const res = await fetch('/.netlify/functions/create-checkout', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ priceId: STRIPE_PRICE_ID })
-      // });
-      // const { sessionId } = await res.json();
-      // await stripe.redirectToCheckout({ sessionId });
-      
-      // Placeholder until backend is wired:
-      alert('Stripe Checkout will open here once your publishable key and price ID are set.\n\nReplace STRIPE_PK and STRIPE_PRICE_ID in the script.');
+      const res = await fetch('/.netlify/functions/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: STRIPE_PRICE_ID })
+      });
+      const { sessionId } = await res.json();
+      await stripe.redirectToCheckout({ sessionId });
     } catch (err) {
       console.error('Checkout error:', err);
+      alert('Something went wrong. Please try again.');
     }
   }
 
