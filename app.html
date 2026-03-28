@@ -1,0 +1,2402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PARSEUR 10X — Parse Your Credit Report</title>
+<meta name="description" content="Upload your credit report PDF and let AI flag negative items, score their impact, and generate dispute letters. Free to use.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://parseur10x.live/app">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap" rel="stylesheet">
+
+<!-- Schema: WebApplication -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "PARSEUR 10X Credit Report Parser",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web"
+}
+</script>
+
+<style>
+  :root {
+    --white: #FFFFFF;
+    --bg: #F8F9FC;
+    --bg-alt: #F0F2F8;
+    --surface: #FFFFFF;
+    --border: #E2E5EF;
+    --border-light: #ECEEF5;
+    --text-primary: #1A1D2B;
+    --text-secondary: #5A6078;
+    --text-muted: #8B90A5;
+    --accent: #2563EB;
+    --accent-hover: #1D4ED8;
+    --accent-light: #EFF4FF;
+    --accent-glow: rgba(37,99,235,0.12);
+    --success: #059669;
+    --success-light: #ECFDF5;
+    --warning: #D97706;
+    --warning-light: #FFFBEB;
+    --danger: #DC2626;
+    --danger-light: #FEF2F2;
+    --pro-gold: #B8860B;
+    --pro-gold-light: #FFF8E7;
+    --radius: 12px;
+    --radius-lg: 20px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-glow: 0 0 0 4px var(--accent-glow);
+    --font-display: 'Fraunces', serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* NAV */
+  .app-nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-light);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-nav-logo {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .app-nav-logo span {
+    background: var(--accent);
+    color: white;
+    font-family: var(--font-body);
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .app-nav-right { display: flex; align-items: center; gap: 16px; }
+  .app-nav-plan {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 100px;
+    background: var(--bg-alt);
+    color: var(--text-muted);
+  }
+  .app-nav-plan.pro { background: var(--pro-gold-light); color: var(--pro-gold); }
+  .upgrade-btn {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+    padding: 6px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .upgrade-btn:hover { background: var(--accent); color: white; }
+
+  /* MAIN LAYOUT */
+  .app-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* ==================== UPLOAD STATE ==================== */
+  #uploadState { }
+  .upload-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .upload-header h1 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .upload-header p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+  .upload-zone {
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    box-shadow: var(--shadow-glow);
+  }
+  .upload-zone input { display: none; }
+  .upload-icon { font-size: 3rem; margin-bottom: 16px; }
+  .upload-zone h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .upload-zone p { color: var(--text-muted); font-size: 0.88rem; }
+  .upload-zone .browse-link { color: var(--accent); font-weight: 600; text-decoration: underline; }
+  .upload-formats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+  .upload-formats span { display: flex; align-items: center; gap: 4px; }
+
+  /* ==================== PROCESSING STATE ==================== */
+  #processingState { display: none; text-align: center; padding: 80px 0; }
+  .processing-spinner {
+    width: 64px;
+    height: 64px;
+    border: 4px solid var(--border-light);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 24px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .processing-steps {
+    max-width: 400px;
+    margin: 32px auto 0;
+    text-align: left;
+  }
+  .processing-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    transition: color 0.3s;
+  }
+  .processing-step.active { color: var(--accent); font-weight: 600; }
+  .processing-step.done { color: var(--success); }
+  .processing-step .step-indicator {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+  .processing-step.active .step-indicator { background: var(--accent-light); color: var(--accent); }
+  .processing-step.done .step-indicator { background: var(--success-light); color: var(--success); }
+
+  /* ==================== RESULTS STATE ==================== */
+  #resultsState { display: none; }
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .results-header h1 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+  .results-header-actions { display: flex; gap: 12px; }
+  .btn-sm {
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-sm.primary:hover { background: var(--accent-hover); }
+
+  /* Score + Summary Cards */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+  }
+  .score-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .score-ring {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .score-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .score-ring circle {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+  }
+  .score-ring .bg { stroke: var(--border-light); }
+  .score-ring .fill { stroke: var(--warning); stroke-dasharray: 339; stroke-dashoffset: 220; transition: stroke-dashoffset 1.5s ease; }
+  .score-num {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--warning);
+  }
+  .score-label { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; }
+  .summary-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 0.88rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-value { font-weight: 700; }
+  .stat-value.red { color: var(--danger); }
+  .stat-value.yellow { color: var(--warning); }
+  .stat-value.green { color: var(--success); }
+
+  /* Negative Items List */
+  .neg-section {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .neg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .neg-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+  .neg-count {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 100px;
+    background: var(--danger-light);
+    color: var(--danger);
+  }
+  .neg-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.2s;
+  }
+  .neg-item:last-child { border-bottom: none; }
+  .neg-item:hover { background: var(--bg); }
+  .neg-item-info h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; }
+  .neg-item-info p { font-size: 0.82rem; color: var(--text-muted); }
+  .neg-impact {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+  .neg-impact.high { background: var(--danger-light); color: var(--danger); }
+  .neg-impact.medium { background: var(--warning-light); color: var(--warning); }
+  .neg-impact.low { background: var(--success-light); color: var(--success); }
+  .neg-action {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+    background: none;
+    border: none;
+    white-space: nowrap;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  .neg-action:hover { background: var(--accent-light); }
+  .neg-action.pro-only {
+    color: var(--pro-gold);
+    position: relative;
+  }
+
+  /* Recommendations */
+  .rec-card {
+    background: var(--accent-light);
+    border: 1px solid rgba(37,99,235,0.15);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .rec-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+  .rec-content { flex: 1; }
+  .rec-content h4 { font-size: 0.92rem; font-weight: 700; margin-bottom: 4px; }
+  .rec-content p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+  .rec-affiliate {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+    margin-top: 8px;
+  }
+  .rec-affiliate:hover { text-decoration: underline; }
+
+  /* Dispute Letter Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    max-width: 700px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .modal-header h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 4px;
+  }
+  .modal-body { padding: 24px; }
+  .letter-content {
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 24px;
+    font-size: 0.88rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    font-family: 'Georgia', serif;
+  }
+  .letter-certified-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    border: 1px solid #059669;
+    border-radius: var(--radius);
+  }
+  .letter-certified-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .letter-certified-tip strong {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .letter-certified-tip p {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+  }
+  @media print {
+    body > *:not(.modal-overlay) { display: none !important; }
+    .modal-overlay.open { position: static; background: none; backdrop-filter: none; padding: 0; }
+    .modal { box-shadow: none; max-width: 100%; max-height: none; }
+    .modal-header, .modal-actions, .letter-certified-tip { display: none !important; }
+    .modal-body { padding: 0; }
+    .letter-content { border: none; background: white; padding: 0; font-size: 12pt; line-height: 1.6; }
+  }
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid var(--border-light);
+  }
+
+  /* Gamification Sidebar */
+  .gamification-widget {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .gw-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .gw-rank {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: var(--accent-light);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+  }
+  .gw-rank-emoji { font-size: 1.8rem; }
+  .gw-rank-name { font-weight: 700; font-size: 0.95rem; }
+  .gw-rank-next { font-size: 0.78rem; color: var(--text-muted); }
+  .gw-progress {
+    height: 8px;
+    background: var(--border-light);
+    border-radius: 100px;
+    overflow: hidden;
+    margin: 12px 0 4px;
+  }
+  .gw-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #60A5FA);
+    border-radius: 100px;
+    width: 20%;
+    transition: width 1s ease;
+  }
+  .gw-progress-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-align: right;
+  }
+  .gw-badges {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .gw-badge {
+    text-align: center;
+    padding: 12px 4px;
+    background: var(--bg);
+    border-radius: 8px;
+    font-size: 1.3rem;
+  }
+  .gw-badge.locked { opacity: 0.3; filter: grayscale(1); }
+  .gw-badge-name { font-size: 0.62rem; font-weight: 600; color: var(--text-muted); margin-top: 4px; }
+  .gw-streak {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--warning-light);
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--warning);
+  }
+
+  /* Affiliate Sidebar */
+  .affiliate-widget {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
+    animation: affSidebarFadeIn 0.5s ease forwards;
+  }
+  .affiliate-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent);
+  }
+  .affiliate-widget::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(37,99,235,0.04), transparent);
+    animation: affSidebarShine 8s ease-in-out 3s infinite;
+    pointer-events: none;
+  }
+  @keyframes affSidebarFadeIn {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes affSidebarShine {
+    0% { left: -100%; }
+    25%, 100% { left: 100%; }
+  }
+  .aw-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .aw-card {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .aw-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .aw-content h4 { font-size: 0.88rem; font-weight: 700; margin-bottom: 4px; }
+  .aw-content p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
+  .aw-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: white;
+    background: var(--accent);
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .aw-link:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+  }
+
+  /* Results Layout */
+  .results-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+  }
+
+  /* Pro Upsell Banner */
+  .pro-banner {
+    background: linear-gradient(135deg, #1A1D2B 0%, #2D3148 100%);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .pro-banner h3 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .pro-banner p {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.7);
+    margin-top: 4px;
+  }
+  .pro-banner-btn {
+    background: white;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 10px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform 0.2s;
+  }
+  .pro-banner-btn:hover { transform: translateY(-2px); }
+
+  /* Confetti */
+  .confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    animation: confettiFall 3s ease-in forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Email Gate Modal */
+  .email-gate-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(26,29,43,0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1001;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .email-gate-overlay.open { display: flex; }
+  .email-gate-modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    max-width: 440px;
+    width: 100%;
+    padding: 40px 32px;
+    text-align: center;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+    animation: egSlideUp 0.4s ease;
+  }
+  @keyframes egSlideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .email-gate-icon { font-size: 3rem; margin-bottom: 16px; }
+  .email-gate-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+  .email-gate-sub {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .email-gate-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 28px;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-light);
+  }
+  .eg-stat { text-align: center; }
+  .eg-stat-num {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .eg-stat-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .eg-stat-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--border-light);
+  }
+  .email-gate-field {
+    margin-bottom: 16px;
+  }
+  .email-gate-field input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--text-primary);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-align: center;
+  }
+  .email-gate-field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-glow);
+  }
+  .email-gate-field input::placeholder {
+    color: var(--text-muted);
+  }
+  .email-gate-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+  }
+  .email-gate-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+  }
+  .email-gate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .email-gate-privacy {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 14px;
+  }
+  .email-gate-error {
+    color: var(--danger);
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* ==================== STRATEGY EXPLAINERS ==================== */
+  .strategy-explainer {
+    margin-top: 10px;
+    border-top: 1px solid var(--border-light);
+    padding-top: 10px;
+  }
+  .strategy-toggle {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .strategy-toggle:hover { text-decoration: underline; }
+  .strategy-toggle .arrow {
+    transition: transform 0.2s;
+    font-size: 0.65rem;
+  }
+  .strategy-toggle.open .arrow { transform: rotate(90deg); }
+  .strategy-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .strategy-body.open { max-height: 400px; }
+  .strategy-body-inner {
+    padding-top: 10px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .strategy-section {
+    margin-bottom: 8px;
+  }
+  .strategy-section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  .strategy-section p {
+    margin: 0;
+    font-size: 0.82rem;
+  }
+  .strategy-protip {
+    background: var(--warning-light);
+    border-left: 3px solid var(--warning);
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    margin-top: 8px;
+  }
+  .strategy-protip strong {
+    color: var(--warning);
+  }
+  .paper-trail-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--success);
+    background: var(--success-light);
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+  }
+
+  /* ==================== AFFILIATE CTA CARDS ==================== */
+  .aff-cta-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border: 2px solid;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: affPulseIn 0.6s ease forwards, affGlow 5s ease-in-out 3s infinite;
+    overflow: hidden;
+  }
+  .aff-cta-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%);
+    animation: affShimmer 6s ease-in-out 2s infinite;
+    pointer-events: none;
+  }
+  .aff-cta-card:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+  .aff-cta-card.kikoff {
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    border-color: #059669;
+  }
+  .aff-cta-card.ava {
+    background: linear-gradient(135deg, #FFF8E7 0%, #FEF3C7 100%);
+    border-color: #D97706;
+  }
+  .aff-cta-card.identityiq {
+    background: linear-gradient(135deg, #EFF4FF 0%, #DBEAFE 100%);
+    border-color: #2563EB;
+  }
+  .aff-cta-left { flex: 1; }
+  .aff-cta-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    opacity: 0.8;
+  }
+  .aff-cta-text {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .aff-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--text-primary);
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 10px 22px;
+    border-radius: 8px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+    animation: affBtnPulse 4s ease-in-out 4s infinite;
+  }
+  .aff-cta-btn:hover {
+    background: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+  }
+
+  @keyframes affPulseIn {
+    0% { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes affGlow {
+    0%, 100% { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    50% { box-shadow: 0 4px 20px rgba(37,99,235,0.15); }
+  }
+  @keyframes affShimmer {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    30%, 100% { transform: translateX(100%) rotate(45deg); }
+  }
+  @keyframes affBtnPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  @media (max-width: 768px) {
+    .aff-cta-card { flex-direction: column; text-align: center; }
+  }
+
+  /* ==================== GATED/LOCKED ITEMS ==================== */
+  .neg-item.locked {
+    position: relative;
+    user-select: none;
+    pointer-events: none;
+  }
+  .neg-item.locked .neg-item-info,
+  .neg-item.locked .neg-impact,
+  .neg-item.locked .neg-action {
+    filter: blur(6px);
+    opacity: 0.5;
+  }
+  .locked-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    pointer-events: auto;
+  }
+  .locked-overlay-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+    transition: transform 0.2s, background 0.2s;
+  }
+  .locked-overlay-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+  }
+  .locked-more-banner {
+    background: linear-gradient(135deg, var(--accent-light) 0%, #EDE9FE 100%);
+    border: 2px dashed var(--accent);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    margin-top: 4px;
+  }
+  .locked-more-banner h3 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .locked-more-banner p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+  }
+  .score-locked {
+    position: relative;
+  }
+  .score-locked .score-ring,
+  .score-locked .score-num {
+    filter: blur(8px);
+    opacity: 0.4;
+  }
+  .score-locked-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--accent);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 100px;
+    white-space: nowrap;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .rec-card.locked {
+    position: relative;
+    user-select: none;
+  }
+  .rec-card.locked .rec-icon,
+  .rec-card.locked .rec-content {
+    filter: blur(5px);
+    opacity: 0.5;
+  }
+  .sidebar-locked {
+    position: relative;
+  }
+  .sidebar-locked > * {
+    filter: blur(5px);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .sidebar-locked-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    text-align: center;
+    width: 80%;
+  }
+  .sidebar-locked-overlay p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  /* ==================== UNLOCK BANNER ==================== */
+  .unlock-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(5,150,105,0.3);
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .unlock-banner.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  .unlock-banner-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    animation: unlockBounce 0.6s ease 0.3s;
+  }
+  @keyframes unlockBounce {
+    0%, 100% { transform: scale(1); }
+    40% { transform: scale(1.3); }
+    70% { transform: scale(0.9); }
+  }
+  .unlock-banner-text {
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .unlock-banner-text strong {
+    display: block;
+    font-size: 1.05rem;
+    margin-bottom: 2px;
+  }
+
+  /* Toast Notifications */
+  .toast {
+    position: fixed;
+    top: 72px;
+    right: 24px;
+    z-index: 9999;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+    max-width: 400px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast-success { background: var(--success-light); color: var(--success); border: 1px solid rgba(5,150,105,0.2); }
+  .toast-warning { background: var(--warning-light); color: var(--warning); border: 1px solid rgba(217,119,6,0.2); }
+  .toast-error { background: var(--danger-light); color: var(--danger); border: 1px solid rgba(220,38,38,0.2); }
+  .toast-info { background: var(--accent-light); color: var(--accent); border: 1px solid rgba(37,99,235,0.2); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .summary-grid { grid-template-columns: 1fr; }
+    .results-layout { grid-template-columns: 1fr; }
+    .neg-item { grid-template-columns: 1fr; gap: 8px; }
+    .results-header { flex-direction: column; }
+    .pro-banner { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="app-nav">
+  <a href="index.html" class="app-nav-logo">🛡️ PARSEUR <span>10X</span></a>
+  <div class="app-nav-right">
+    <div class="app-nav-plan" id="planBadge">FREE PLAN</div>
+    <a href="#" class="upgrade-btn" id="upgradeBtn" onclick="showUpgradeModal()">Upgrade to Pro</a>
+  </div>
+</div>
+
+<!-- APP CONTAINER -->
+<div class="app-container">
+
+  <!-- ==================== UPLOAD STATE ==================== -->
+  <div id="uploadState">
+    <div class="upload-header">
+      <h1>🛡️ Parse Your Credit Report</h1>
+      <p>Upload your PDF credit report and let AI do the heavy lifting.</p>
+    </div>
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+      <input type="file" id="fileInput" accept=".pdf" onchange="handleFileUpload(this.files[0])">
+      <div class="upload-icon">📄</div>
+      <h3>Drop your credit report here</h3>
+      <p>or <span class="browse-link">browse files</span> to upload</p>
+      <div class="upload-formats">
+        <span>📋 PDF format</span>
+        <span>🔒 Encrypted in transit</span>
+        <span>🗑️ Never stored</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PROCESSING STATE ==================== -->
+  <div id="processingState">
+    <div class="processing-spinner"></div>
+    <h2 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-bottom:8px;">Analyzing Your Report...</h2>
+    <p style="color:var(--text-secondary);font-size:0.95rem;">This usually takes 15-30 seconds</p>
+    <div class="processing-steps">
+      <div class="processing-step active" id="step1">
+        <div class="step-indicator">1</div>
+        <span>Extracting text from PDF...</span>
+      </div>
+      <div class="processing-step" id="step2">
+        <div class="step-indicator">2</div>
+        <span>Identifying accounts & tradelines...</span>
+      </div>
+      <div class="processing-step" id="step3">
+        <div class="step-indicator">3</div>
+        <span>Flagging negative items...</span>
+      </div>
+      <div class="processing-step" id="step4">
+        <div class="step-indicator">4</div>
+        <span>Scoring impact & generating recommendations...</span>
+      </div>
+      <div class="processing-step" id="step5">
+        <div class="step-indicator">5</div>
+        <span>Preparing your results dashboard...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== RESULTS STATE ==================== -->
+  <div id="resultsState">
+    <div class="results-header">
+      <div>
+        <h1>📊 Your Credit Report Analysis</h1>
+        <p style="color:var(--text-secondary);font-size:0.88rem;margin-top:4px;">Report parsed on <span id="parseDate"></span></p>
+      </div>
+      <div class="results-header-actions">
+        <button class="btn-sm" onclick="window.print()">🖨️ Print</button>
+        <button class="btn-sm" onclick="resetApp()">📤 Parse Another</button>
+      </div>
+    </div>
+
+    <!-- Pro Upsell Banner (show for free users) -->
+    <div class="pro-banner" id="proBanner">
+      <div>
+        <h3>🔓 Unlock Dispute Letters & Credit Quest</h3>
+        <p>Pro users get unlimited parses, AI dispute letters, gamification, and priority templates.</p>
+      </div>
+      <a href="#" class="pro-banner-btn" onclick="showUpgradeModal()">Upgrade — $17/mo →</a>
+    </div>
+
+    <div class="results-layout">
+      <!-- LEFT: Main Content -->
+      <div>
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+          <div class="summary-card score-card">
+            <div class="score-ring">
+              <svg viewBox="0 0 120 120">
+                <circle class="bg" cx="60" cy="60" r="54"/>
+                <circle class="fill" cx="60" cy="60" r="54" id="scoreRing"/>
+              </svg>
+              <div class="score-num" id="scoreNum">0</div>
+            </div>
+            <div class="score-label" id="scoreLabel">Credit Health Score</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">Report Overview</div>
+            <div id="reportOverview"></div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">Issue Breakdown</div>
+            <div id="issueBreakdown"></div>
+          </div>
+        </div>
+
+        <!-- Negative Items (dynamic) -->
+        <div class="neg-section">
+          <div class="neg-header">
+            <h2>⚠️ Flagged Negative Items</h2>
+            <div class="neg-count" id="negCount">0 items found</div>
+          </div>
+          <div id="negItemsList"></div>
+        </div>
+
+        <!-- AI Recommendations (dynamic) -->
+        <div style="margin-bottom:24px">
+          <h2 style="font-family:var(--font-display);font-size:1.15rem;font-weight:700;margin-bottom:16px;">🎯 AI Recommendations</h2>
+          <div id="recsList"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Sidebar -->
+      <div id="resultsSidebar">
+        <!-- Gamification Widget -->
+        <div class="gamification-widget" id="gamificationWidget">
+          <div class="gw-title">🎮 Credit Quest</div>
+          <div class="gw-rank">
+            <div class="gw-rank-emoji">🌱</div>
+            <div>
+              <div class="gw-rank-name">Credit Rookie</div>
+              <div class="gw-rank-next">Next: Credit Builder</div>
+            </div>
+          </div>
+          <div class="gw-progress"><div class="gw-progress-fill" style="width:20%"></div></div>
+          <div class="gw-progress-label">1/5 milestones completed</div>
+
+          <div class="gw-badges">
+            <div class="gw-badge">📤<div class="gw-badge-name">First Upload</div></div>
+            <div class="gw-badge locked">✉️<div class="gw-badge-name">Dispute Filed</div></div>
+            <div class="gw-badge locked">🔥<div class="gw-badge-name">Streak</div></div>
+            <div class="gw-badge locked">🗑️<div class="gw-badge-name">Clean Sweep</div></div>
+            <div class="gw-badge locked">🚀<div class="gw-badge-name">Score Rocket</div></div>
+            <div class="gw-badge locked">💎<div class="gw-badge-name">Clean Slate</div></div>
+          </div>
+
+          <div class="gw-streak">🔥 1-day streak — come back tomorrow!</div>
+        </div>
+
+        <!-- Affiliate Widgets -->
+        <div class="affiliate-widget">
+          <div class="aw-title">🏗️ Recommended Tool</div>
+          <div class="aw-card">
+            <div class="aw-icon">🏗️</div>
+            <div class="aw-content">
+              <h4>Kikoff Credit Builder</h4>
+              <p>Build credit history with $0/mo. No hard pull, reports to all 3 bureaus.</p>
+              <a href="https://kikoff.pxf.io/c/7007975/2344833/14994" target="_blank" rel="noopener sponsored" class="aw-link">Start free →</a>
+              <img height="0" width="0" src="https://imp.pxf.io/i/7007975/2344833/14994" style="position:absolute;visibility:hidden;" border="0" />
+            </div>
+          </div>
+        </div>
+
+        <div class="affiliate-widget">
+          <div class="aw-title">💳 Build While You Fix</div>
+          <div class="aw-card">
+            <div class="aw-icon">💳</div>
+            <div class="aw-content">
+              <h4>Ava Credit Card</h4>
+              <p>AI-powered card for rebuilders. No deposit, no hard pull.</p>
+              <a href="https://meetava.sjv.io/KB0xLA" target="_blank" rel="noopener sponsored" class="aw-link">Check eligibility →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="affiliate-widget">
+          <div class="aw-title">🔍 Track Your Progress</div>
+          <div class="aw-card">
+            <div class="aw-icon">🔍</div>
+            <div class="aw-content">
+              <h4>IdentityIQ Monitoring</h4>
+              <p>Real-time score tracking + dispute result alerts across all 3 bureaus.</p>
+              <a href="https://www.identityiq.com/sc-securemax.aspx?offercode=431297RY" target="_blank" rel="noopener sponsored" class="aw-link">Start monitoring →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== USER INFO MODAL ==================== -->
+<div class="modal-overlay" id="userInfoModal">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h3>📝 Your Information</h3>
+      <button class="modal-close" onclick="document.getElementById('userInfoModal').classList.remove('open');document.body.style.overflow='';">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:20px;">This info will be auto-filled into all your dispute letters so they're ready to print and send.</p>
+      <div class="contact-field">
+        <label>Full Legal Name</label>
+        <input type="text" id="userFullName" placeholder="John A. Doe" style="text-align:left;">
+      </div>
+      <div class="contact-field">
+        <label>Street Address</label>
+        <input type="text" id="userAddress" placeholder="123 Main Street, Apt 4B" style="text-align:left;">
+      </div>
+      <div class="contact-field">
+        <label>City, State ZIP</label>
+        <input type="text" id="userCityStateZip" placeholder="Las Vegas, NV 89101" style="text-align:left;">
+      </div>
+      <button class="email-gate-btn" onclick="saveUserInfo()" style="margin-top:8px;">Save & Generate Letter →</button>
+      <p style="font-size:0.72rem;color:var(--text-muted);margin-top:10px;text-align:center;">🔒 Stored locally on your device only. Never sent to our servers.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DISPUTE LETTER MODAL ==================== -->
+<div class="modal-overlay" id="letterModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Dispute Letter</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="letter-content" id="letterContent"></div>
+      <div class="letter-certified-tip">
+        <div class="letter-certified-icon">📬</div>
+        <div>
+          <strong>Send Disputes via Certified Mail with Return Receipt Requested</strong>
+          <p>For all dispute correspondence, use certified mail to create a legal paper trail proving the recipient received your letter. Keep the receipt — you may need it if they don't respond within 30 days. Dispute communication should always be in writing, never by phone.</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm primary" onclick="copyLetter()">📋 Copy to Clipboard</button>
+      <button class="btn-sm" onclick="printLetter()">🖨️ Print Letter</button>
+      <button class="btn-sm" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confetti Container -->
+<div class="confetti-container" id="confettiContainer"></div>
+
+<!-- ==================== EMAIL GATE MODAL ==================== -->
+<div class="email-gate-overlay" id="emailGate">
+  <div class="email-gate-modal">
+    <div class="email-gate-icon">🛡️</div>
+    <h2 class="email-gate-title">Your Report Is Ready</h2>
+    <p class="email-gate-sub">We found items on your report. Enter your email to unlock your personalized analysis.</p>
+    <div class="email-gate-stats">
+      <div class="eg-stat">
+        <div class="eg-stat-num" id="egItemCount">—</div>
+        <div class="eg-stat-label">Items Flagged</div>
+      </div>
+      <div class="eg-stat-divider"></div>
+      <div class="eg-stat">
+        <div class="eg-stat-num" id="egScoreGain">—</div>
+        <div class="eg-stat-label">Potential Gain</div>
+      </div>
+    </div>
+    <div class="email-gate-field">
+      <input type="email" id="egEmail" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <button class="email-gate-btn" id="egSubmitBtn" onclick="submitEmailGate()">See My Results →</button>
+    <p class="email-gate-privacy">🔒 No spam. We only send your analysis results and credit tips.</p>
+    <div id="egError" class="email-gate-error"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+  // ==================== STATE MANAGEMENT ====================
+  const APP_STATE = {
+    isPro: false,
+    fileName: '',
+    parsedAt: null,
+    emailCaptured: false,
+  };
+
+  // Check if email was previously captured
+  try {
+    if (localStorage.getItem('parseur10x_email')) {
+      APP_STATE.emailCaptured = true;
+    }
+  } catch(e) {}
+
+  const STRIPE_PK = 'pk_live_51TFKH15slFMmVhuxVLAxzKVymPgrgxCjk4ztrmwCUYkqjgBHPFr5QfwhnbtrCkTDucLQyRgVTuSxDZbYkDtkjFhk00i3LwJXql';
+  const STRIPE_PRICE_ID = 'price_1TFowO5slFMmVhuxk83h7MTW';
+
+  // ==================== PRO STATUS CHECK ====================
+  function activatePro(showUnlockAnimation = false) {
+    APP_STATE.isPro = true;
+    document.getElementById('planBadge').textContent = 'PRO';
+    document.getElementById('planBadge').classList.add('pro');
+    document.getElementById('upgradeBtn').style.display = 'none';
+    try { localStorage.setItem('parseur10x_pro', 'true'); } catch(e) {}
+
+    // If we have analysis data, re-render results with everything unlocked
+    if (APP_STATE.analysis && document.getElementById('resultsState').style.display === 'block') {
+      const negsCount = (APP_STATE.analysis.negativeItems || []).length;
+      const recsCount = (APP_STATE.analysis.recommendations || []).length;
+      const unlockedItems = Math.max(0, negsCount - 1);
+      const unlockedRecs = Math.max(0, recsCount - 1);
+
+      showResults(APP_STATE.analysis);
+
+      if (showUnlockAnimation && (unlockedItems > 0 || unlockedRecs > 0)) {
+        showUnlockBanner(unlockedItems, unlockedRecs);
+      }
+    }
+  }
+
+  function showUnlockBanner(items, recs) {
+    const banner = document.createElement('div');
+    banner.className = 'unlock-banner';
+    banner.innerHTML = `
+      <div class="unlock-banner-icon">🔓</div>
+      <div class="unlock-banner-text">
+        <strong>Pro Unlocked!</strong>
+        You now have access to ${items > 0 ? items + ' more negative item' + (items > 1 ? 's' : '') : ''}${items > 0 && recs > 0 ? ' and ' : ''}${recs > 0 ? recs + ' more recommendation' + (recs > 1 ? 's' : '') : ''}, plus dispute letters, Credit Quest, and unlimited parses.
+      </div>
+    `;
+    
+    const resultsHeader = document.querySelector('.results-header');
+    if (resultsHeader) {
+      resultsHeader.after(banner);
+      requestAnimationFrame(() => banner.classList.add('show'));
+      setTimeout(() => {
+        banner.classList.remove('show');
+        setTimeout(() => banner.remove(), 400);
+      }, 6000);
+    }
+  }
+
+  function deactivatePro() {
+    APP_STATE.isPro = false;
+    document.getElementById('planBadge').textContent = 'FREE PLAN';
+    document.getElementById('planBadge').classList.remove('pro');
+    document.getElementById('upgradeBtn').style.display = '';
+    try { localStorage.removeItem('parseur10x_pro'); } catch(e) {}
+  }
+
+  // Check localStorage for returning pro users
+  try {
+    if (localStorage.getItem('parseur10x_pro') === 'true') {
+      activatePro();
+    }
+  } catch(e) {}
+
+  // Restore analysis from sessionStorage (survives Stripe redirect)
+  try {
+    const savedAnalysis = sessionStorage.getItem('parseur10x_analysis');
+    if (savedAnalysis) {
+      APP_STATE.analysis = JSON.parse(savedAnalysis);
+    }
+  } catch(e) {}
+
+  // Handle return from Stripe Checkout
+  (function handleCheckoutReturn() {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    const canceled = params.get('canceled');
+
+    if (sessionId) {
+      // Verify the session with our backend
+      verifyCheckoutSession(sessionId);
+      // Clean URL without reload
+      window.history.replaceState({}, '', '/app.html');
+      // If we have saved analysis, jump straight to results
+      if (APP_STATE.analysis) {
+        document.getElementById('uploadState').style.display = 'none';
+        document.getElementById('resultsState').style.display = 'block';
+      }
+    } else if (canceled) {
+      showToast('Checkout canceled — no charges were made.', 'warning');
+      window.history.replaceState({}, '', '/app.html');
+      // Return to results if analysis exists
+      if (APP_STATE.analysis) {
+        document.getElementById('uploadState').style.display = 'none';
+        document.getElementById('resultsState').style.display = 'block';
+        showResults(APP_STATE.analysis);
+      }
+    } else if (params.get('plan') === 'pro') {
+      activatePro(true);
+      window.history.replaceState({}, '', '/app.html');
+    }
+  })();
+
+  async function verifyCheckoutSession(sessionId) {
+    try {
+      const res = await fetch('/.netlify/functions/verify-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      });
+      const data = await res.json();
+
+      if (data.paid) {
+        activatePro(true);
+        showToast('Welcome to Pro! You now have full access.', 'success');
+        setTimeout(triggerConfetti, 300);
+      } else {
+        showToast('Payment not confirmed yet. If you completed payment, refresh in a moment.', 'warning');
+      }
+    } catch (err) {
+      console.error('Session verification error:', err);
+      // Optimistic activation — payment likely went through if we have a session_id
+      activatePro(true);
+      showToast('Welcome to Pro!', 'success');
+      setTimeout(triggerConfetti, 300);
+    }
+  }
+
+  // ==================== STRIPE CHECKOUT ====================
+  function showUpgradeModal() {
+    handleStripeCheckout();
+  }
+
+  async function handleStripeCheckout() {
+    const btn = document.querySelector('.upgrade-btn') || document.querySelector('.pro-banner-btn');
+    const origText = btn ? btn.textContent : '';
+    if (btn) { btn.textContent = 'Opening checkout...'; btn.style.pointerEvents = 'none'; }
+
+    try {
+      const stripe = Stripe(STRIPE_PK);
+      const res = await fetch('/.netlify/functions/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: STRIPE_PRICE_ID })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to create checkout session');
+      }
+
+      const { sessionId } = await res.json();
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Checkout error:', err);
+      showToast('Something went wrong. Please try again.', 'error');
+    } finally {
+      if (btn) { btn.textContent = origText; btn.style.pointerEvents = ''; }
+    }
+  }
+
+  // ==================== TOAST NOTIFICATIONS ====================
+  function showToast(message, type = 'info') {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    const icons = { success: '✅', warning: '⚠️', error: '❌', info: 'ℹ️' };
+    toast.innerHTML = '<span>' + (icons[type] || '') + '</span> ' + message;
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
+
+  // ==================== EMAIL GATE ====================
+  function showEmailGate(analysis) {
+    // Populate teaser stats
+    const negs = analysis.negativeItems || [];
+    const totalGain = negs.reduce((sum, n) => sum + (n.impactScore || 0), 0);
+    document.getElementById('egItemCount').textContent = negs.length;
+    document.getElementById('egScoreGain').textContent = '+' + totalGain + ' pts';
+
+    // Show the gate
+    document.getElementById('processingState').style.display = 'none';
+    document.getElementById('emailGate').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // Focus email input
+    setTimeout(() => document.getElementById('egEmail').focus(), 400);
+
+    // Enter key submits
+    document.getElementById('egEmail').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitEmailGate();
+    });
+  }
+
+  async function submitEmailGate() {
+    const emailInput = document.getElementById('egEmail');
+    const email = emailInput.value.trim();
+    const errEl = document.getElementById('egError');
+    const btn = document.getElementById('egSubmitBtn');
+
+    // Validate
+    if (!email) {
+      errEl.textContent = 'Please enter your email address.';
+      errEl.style.display = 'block';
+      emailInput.focus();
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errEl.textContent = 'Please enter a valid email address.';
+      errEl.style.display = 'block';
+      emailInput.focus();
+      return;
+    }
+
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Unlocking...';
+
+    // Store email locally
+    APP_STATE.emailCaptured = true;
+    try { localStorage.setItem('parseur10x_email', email); } catch(e) {}
+
+    // Send to backend (non-blocking — don't wait for response)
+    fetch('/.netlify/functions/capture-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, source: 'email_gate', fileName: APP_STATE.fileName }),
+    }).catch(() => {}); // Fail silently — email is already stored locally
+
+    // Close gate and show results
+    await sleep(600);
+    document.getElementById('emailGate').classList.remove('open');
+    document.body.style.overflow = '';
+    btn.disabled = false;
+    btn.textContent = 'See My Results →';
+
+    showResults(APP_STATE.analysis);
+  }
+
+  // ==================== AFFILIATE LINKS ====================
+  const AFFILIATES = {
+    kikoff: { url: 'https://kikoff.pxf.io/c/7007975/2344833/14994', label: 'Try Kikoff — $0/mo credit builder →', pixel: 'https://imp.pxf.io/i/7007975/2344833/14994' },
+    ava: { url: 'https://meetava.sjv.io/KB0xLA', label: 'Check Ava Credit eligibility →', pixel: null },
+    identityiq: { url: 'https://www.identityiq.com/sc-securemax.aspx?offercode=431297RY', label: 'Start IdentityIQ monitoring →', pixel: null },
+  };
+
+  // ==================== FILE UPLOAD ====================
+  const uploadZone = document.getElementById('uploadZone');
+
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+  });
+  uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('dragover');
+  });
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFileUpload(e.dataTransfer.files[0]);
+  });
+
+  function handleFileUpload(file) {
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      showToast('Please upload a PDF file.', 'warning');
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      showToast('File too large. Max 20MB.', 'warning');
+      return;
+    }
+
+    // Free user: 1 parse per month limit
+    if (!APP_STATE.isPro) {
+      try {
+        const parseKey = 'parseur10x_free_parse_' + new Date().getFullYear() + '-' + (new Date().getMonth() + 1);
+        const parseCount = parseInt(localStorage.getItem(parseKey) || '0');
+        if (parseCount >= 1) {
+          showToast('Free plan limit reached — 1 parse per month. Upgrade to Pro for unlimited.', 'warning');
+          setTimeout(() => showUpgradeModal(), 1500);
+          return;
+        }
+      } catch(e) {}
+    }
+
+    APP_STATE.fileName = file.name;
+    startProcessing(file);
+  }
+
+  // ==================== PROCESSING ====================
+  function updateStep(stepNum, status) {
+    const el = document.getElementById('step' + stepNum);
+    if (!el) return;
+    el.classList.remove('active', 'done');
+    if (status === 'active') el.classList.add('active');
+    if (status === 'done') {
+      el.classList.add('done');
+      el.querySelector('.step-indicator').textContent = '✓';
+    }
+  }
+
+  async function startProcessing(file) {
+    document.getElementById('uploadState').style.display = 'none';
+    document.getElementById('processingState').style.display = 'block';
+
+    try {
+      // Step 1: Extract text from PDF using pdf.js
+      updateStep(1, 'active');
+      const reportText = await extractPdfText(file);
+      updateStep(1, 'done');
+
+      if (!reportText || reportText.trim().length < 50) {
+        throw new Error('Could not extract text from this PDF. It may be a scanned image. Please try a text-based credit report PDF.');
+      }
+
+      // Step 2-4: Send to Claude API for analysis
+      updateStep(2, 'active');
+      await sleep(400);
+      updateStep(2, 'done');
+      updateStep(3, 'active');
+
+      const analysis = await analyzeReport(reportText);
+
+      updateStep(3, 'done');
+      updateStep(4, 'active');
+      await sleep(400);
+      updateStep(4, 'done');
+
+      // Step 5: Render results
+      updateStep(5, 'active');
+      await sleep(300);
+      updateStep(5, 'done');
+
+      APP_STATE.analysis = analysis;
+      // Persist analysis so it survives Stripe redirect
+      try { sessionStorage.setItem('parseur10x_analysis', JSON.stringify(analysis)); } catch(e) {}
+      await sleep(500);
+
+      // Pro users or already-gated users skip email gate
+      if (APP_STATE.isPro || APP_STATE.emailCaptured) {
+        showResults(analysis);
+      } else {
+        showEmailGate(analysis);
+      }
+
+    } catch (err) {
+      console.error('Processing error:', err);
+      showToast(err.message || 'Something went wrong. Please try again.', 'error');
+      // Return to upload state
+      setTimeout(() => {
+        document.getElementById('processingState').style.display = 'none';
+        document.getElementById('uploadState').style.display = 'block';
+        resetProcessingSteps();
+      }, 2000);
+    }
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ==================== PDF.JS TEXT EXTRACTION ====================
+  async function extractPdfText(file) {
+    const pdfjsLib = window.pdfjsLib;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(item => item.str).join(' ');
+      fullText += pageText + '\n';
+    }
+    return fullText;
+  }
+
+  // ==================== CLAUDE API ANALYSIS ====================
+  async function analyzeReport(reportText) {
+    // Truncate client-side — 20k chars is enough for most credit reports
+    const trimmed = reportText.substring(0, 8000);
+    console.log('Sending report text:', trimmed.length, 'chars');
+
+    const res = await fetch('/.netlify/functions/parse-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reportText: trimmed }),
+    });
+
+    console.log('Function response status:', res.status);
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Function error response:', errText);
+      let errMsg = 'Analysis failed. Please try again.';
+      try { errMsg = JSON.parse(errText).error || errMsg; } catch(e) {}
+      throw new Error(errMsg);
+    }
+
+    const data = await res.json();
+    console.log('Analysis result:', data);
+    return data;
+  }
+
+  // ==================== RENDER RESULTS ====================
+  function showResults(data) {
+    document.getElementById('processingState').style.display = 'none';
+    document.getElementById('resultsState').style.display = 'block';
+
+    APP_STATE.parsedAt = new Date();
+    document.getElementById('parseDate').textContent = APP_STATE.parsedAt.toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+
+    const isPro = APP_STATE.isPro;
+
+    // Pro banner
+    if (isPro) {
+      document.getElementById('proBanner').style.display = 'none';
+    }
+
+    // ===== CREDIT HEALTH SCORE (Pro only) =====
+    const score = data.creditHealthScore || 0;
+    const scoreCard = document.querySelector('.score-card');
+    if (isPro) {
+      scoreCard.classList.remove('score-locked');
+      const existingLockLabel = scoreCard.querySelector('.score-locked-label');
+      if (existingLockLabel) existingLockLabel.remove();
+      document.getElementById('scoreNum').textContent = score;
+      document.getElementById('scoreLabel').textContent = (data.rank || 'Credit Rookie') + ' · PARSEUR Score';
+      const offset = 339 - (Math.min(score, 1000) / 1000 * 339);
+      const ringEl = document.getElementById('scoreRing');
+      const ringColor = score < 300 ? '#DC2626' : score < 500 ? '#D97706' : score < 700 ? '#F59E0B' : '#059669';
+      ringEl.style.stroke = ringColor;
+      document.getElementById('scoreNum').style.color = ringColor;
+      setTimeout(() => { ringEl.style.strokeDashoffset = offset; }, 300);
+    } else {
+      scoreCard.classList.add('score-locked');
+      document.getElementById('scoreNum').textContent = '???';
+      document.getElementById('scoreLabel').textContent = 'Upgrade to reveal';
+      const lockLabel = document.createElement('div');
+      lockLabel.className = 'score-locked-label';
+      lockLabel.textContent = '🔒 Pro Only';
+      lockLabel.onclick = () => showUpgradeModal();
+      scoreCard.appendChild(lockLabel);
+    }
+
+    // ===== REPORT OVERVIEW (always visible) =====
+    const summary = data.summary || {};
+    document.getElementById('reportOverview').innerHTML = `
+      <div class="stat-row"><span>Total Accounts</span> <span class="stat-value">${summary.totalAccounts || '—'}</span></div>
+      <div class="stat-row"><span>Open Accounts</span> <span class="stat-value">${summary.openAccounts || '—'}</span></div>
+      <div class="stat-row"><span>Closed Accounts</span> <span class="stat-value">${summary.closedAccounts || '—'}</span></div>
+      <div class="stat-row"><span>Total Balance</span> <span class="stat-value">${summary.totalBalance || '—'}</span></div>
+      <div class="stat-row"><span>Hard Inquiries</span> <span class="stat-value ${(summary.hardInquiries || 0) > 3 ? 'yellow' : ''}">${summary.hardInquiries || '—'}</span></div>
+      ${summary.creditScore ? `<div class="stat-row"><span>Credit Score</span> <span class="stat-value">${summary.creditScore} (${summary.creditScoreLabel || ''})</span></div>` : ''}
+    `;
+
+    // ===== ISSUE BREAKDOWN (always visible) =====
+    const negs = data.negativeItems || [];
+    const highCount = negs.filter(n => n.impact === 'high').length;
+    const medCount = negs.filter(n => n.impact === 'medium').length;
+    const lowCount = negs.filter(n => n.impact === 'low').length;
+    const totalGain = negs.reduce((sum, n) => sum + (n.impactScore || 0), 0);
+
+    document.getElementById('issueBreakdown').innerHTML = `
+      <div class="stat-row"><span>🔴 High Impact</span> <span class="stat-value red">${highCount}</span></div>
+      <div class="stat-row"><span>🟡 Medium Impact</span> <span class="stat-value yellow">${medCount}</span></div>
+      <div class="stat-row"><span>🟢 Low Impact</span> <span class="stat-value green">${lowCount}</span></div>
+      <div class="stat-row"><span>Estimated Score Gain</span> <span class="stat-value green">+${totalGain} pts</span></div>
+      <div class="stat-row"><span>Dispute Priority</span> <span class="stat-value ${highCount > 0 ? 'red' : 'green'}">${highCount > 0 ? 'High' : medCount > 0 ? 'Medium' : 'Low'}</span></div>
+    `;
+
+    // ===== NEGATIVE ITEMS (Free: 1 visible, rest locked) =====
+    document.getElementById('negCount').textContent = negs.length + ' items found';
+    let negHtml = '';
+
+    if (negs.length === 0) {
+      negHtml = '<div style="padding:24px;text-align:center;color:var(--text-muted);">No negative items found — your report looks clean! 🎉</div>';
+    } else {
+      negs.forEach((item, i) => {
+        const hasLetter = (data.disputeLetters || []).find(l => l.itemId === item.id);
+        const isVisible = isPro || i === 0; // Free users see only first item
+
+        if (isVisible) {
+          const actionBtn = hasLetter
+            ? (isPro
+              ? `<button class="neg-action" onclick="showDisputeLetter('${item.id}')">Generate Letter ✉️</button>`
+              : `<button class="neg-action pro-only" onclick="showUpgradeModal()">🔒 Pro: Generate Letter</button>`)
+            : `<button class="neg-action" onclick="scrollToRecs()">See Fix →</button>`;
+
+          const se = item.strategyExplainer;
+          const explainerHtml = se ? `
+            <div class="strategy-explainer">
+              <button class="strategy-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+                <span class="arrow">▶</span> What is "${escHtml(item.fixStrategy.replace(/-/g,' '))}" and how to use it
+              </button>
+              <div class="strategy-body">
+                <div class="strategy-body-inner">
+                  <div class="strategy-section">
+                    <div class="strategy-section-label">What It Is</div>
+                    <p>${escHtml(se.whatItIs)}</p>
+                  </div>
+                  <div class="strategy-section">
+                    <div class="strategy-section-label">How To Use It</div>
+                    <p>${escHtml(se.howToUse)}</p>
+                  </div>
+                  <div class="strategy-protip">
+                    <strong>Pro Tip:</strong> ${escHtml(se.proTip)}
+                  </div>
+                  <div class="paper-trail-badge">📬 For disputes: always use certified mail — build your paper trail</div>
+                </div>
+              </div>
+            </div>
+          ` : '';
+
+          negHtml += `
+            <div class="neg-item" style="flex-wrap:wrap;">
+              <div class="neg-item-info">
+                <h4>${escHtml(item.creditor)} — ${escHtml(item.type)}</h4>
+                <p>${escHtml(item.details)}</p>
+                <p style="font-size:0.8rem;color:var(--accent);margin-top:4px;font-weight:600;">Strategy: ${escHtml(item.fixStrategy.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()))}</p>
+                <p style="font-size:0.82rem;color:var(--text-secondary);margin-top:2px;">${escHtml(item.fixExplanation)}</p>
+                ${explainerHtml}
+              </div>
+              <span class="neg-impact ${item.impact}">${item.impact === 'high' ? 'High Impact' : item.impact === 'medium' ? 'Medium' : 'Low Impact'}</span>
+              ${actionBtn}
+            </div>
+          `;
+        } else {
+          // Locked item — blurred with overlay
+          negHtml += `
+            <div class="neg-item locked">
+              <div class="neg-item-info">
+                <h4>${escHtml(item.creditor)} — ${escHtml(item.type)}</h4>
+                <p>${escHtml(item.details)}</p>
+              </div>
+              <span class="neg-impact ${item.impact}">${item.impact === 'high' ? 'High Impact' : item.impact === 'medium' ? 'Medium' : 'Low Impact'}</span>
+              <button class="neg-action">Generate Letter ✉️</button>
+              <div class="locked-overlay">
+                <button class="locked-overlay-btn" onclick="showUpgradeModal()">🔒 Unlock with Pro</button>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      // Add upgrade banner after locked items for free users
+      if (!isPro && negs.length > 1) {
+        negHtml += `
+          <div class="locked-more-banner">
+            <h3>🔓 ${negs.length - 1} more item${negs.length - 1 > 1 ? 's' : ''} found — Upgrade to see all</h3>
+            <p>Pro members see every negative item with full details, impact scores, and AI-generated dispute letters.</p>
+            <button class="locked-overlay-btn" onclick="showUpgradeModal()">Upgrade to Pro — $17/mo →</button>
+          </div>
+        `;
+      }
+    }
+    document.getElementById('negItemsList').innerHTML = negHtml;
+
+    // ===== RECOMMENDATIONS (Free: 1 visible, rest locked) =====
+    const recs = data.recommendations || [];
+    const recIcons = { 1: '🎯', 2: '💌', 3: '📉', 4: '🏗️', 5: '💳', 6: '🔍' };
+    let recsHtml = '';
+
+    recs.forEach((rec, i) => {
+      const isVisible = isPro || i === 0;
+      const aff = rec.affiliateHook && AFFILIATES[rec.affiliateHook];
+      const affStyle = rec.affiliateHook === 'kikoff' ? 'background:var(--success-light);border-color:rgba(5,150,105,0.15);'
+        : rec.affiliateHook === 'ava' ? 'background:var(--pro-gold-light);border-color:rgba(184,134,11,0.15);'
+        : '';
+
+      if (isVisible) {
+        let affHtml = '';
+        if (aff) {
+          affHtml = `
+            <div class="aff-cta-card ${rec.affiliateHook}">
+              <div class="aff-cta-left">
+                <div class="aff-cta-badge">${rec.affiliateHook === 'kikoff' ? '🏗️ Recommended' : rec.affiliateHook === 'ava' ? '💳 Recommended' : '🔍 Recommended'}</div>
+                <div class="aff-cta-text">${aff.label.replace(' →', '')}</div>
+              </div>
+              <a href="${aff.url}" target="_blank" rel="noopener sponsored" class="aff-cta-btn">Get Started →</a>
+              ${aff.pixel ? `<img height="0" width="0" src="${aff.pixel}" style="position:absolute;visibility:hidden;" border="0" />` : ''}
+            </div>
+          `;
+        }
+
+        recsHtml += `
+          <div class="rec-card" ${affStyle ? `style="${affStyle}"` : ''}>
+            <div class="rec-icon">${recIcons[i + 1] || '💡'}</div>
+            <div class="rec-content">
+              <h4>${escHtml(rec.title)}${rec.estimatedGain ? ` <span style="color:var(--success);font-size:0.82rem;">${escHtml(rec.estimatedGain)}</span>` : ''}</h4>
+              <p>${escHtml(rec.description)}</p>
+              ${rec.strategyExplainer ? `
+                <div class="strategy-explainer">
+                  <button class="strategy-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+                    <span class="arrow">▶</span> Learn more about this strategy
+                  </button>
+                  <div class="strategy-body">
+                    <div class="strategy-body-inner">
+                      <div class="strategy-section">
+                        <div class="strategy-section-label">What It Is</div>
+                        <p>${escHtml(rec.strategyExplainer.whatItIs)}</p>
+                      </div>
+                      <div class="strategy-section">
+                        <div class="strategy-section-label">How To Use It</div>
+                        <p>${escHtml(rec.strategyExplainer.howToUse)}</p>
+                      </div>
+                      <div class="strategy-protip">
+                        <strong>Pro Tip:</strong> ${escHtml(rec.strategyExplainer.proTip)}
+                      </div>
+                      <div class="paper-trail-badge">📬 For disputes: always use certified mail — build your paper trail</div>
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
+              ${affHtml}
+            </div>
+          </div>
+        `;
+      } else {
+        recsHtml += `
+          <div class="rec-card locked">
+            <div class="rec-icon">${recIcons[i + 1] || '💡'}</div>
+            <div class="rec-content">
+              <h4>${escHtml(rec.title)}</h4>
+              <p>${escHtml(rec.description)}</p>
+            </div>
+            <div class="locked-overlay">
+              <button class="locked-overlay-btn" onclick="showUpgradeModal()">🔒 Unlock with Pro</button>
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    if (!isPro && recs.length > 1) {
+      recsHtml += `
+        <div class="locked-more-banner">
+          <h3>🔓 ${recs.length - 1} more recommendation${recs.length - 1 > 1 ? 's' : ''} — Upgrade to unlock</h3>
+          <p>Pro members get full fix strategies, dispute letters, and personalized credit building tools.</p>
+          <button class="locked-overlay-btn" onclick="showUpgradeModal()">Upgrade to Pro — $17/mo →</button>
+        </div>
+      `;
+    }
+    document.getElementById('recsList').innerHTML = recsHtml;
+
+    // ===== SIDEBAR: Gamification (Pro only) + Affiliates (always visible) =====
+    const gamWidget = document.getElementById('gamificationWidget');
+    if (isPro) {
+      gamWidget.classList.remove('sidebar-locked');
+      const existingOverlay = gamWidget.querySelector('.sidebar-locked-overlay');
+      if (existingOverlay) existingOverlay.remove();
+      updateGamification(data);
+    } else {
+      gamWidget.classList.add('sidebar-locked');
+      if (!gamWidget.querySelector('.sidebar-locked-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-locked-overlay';
+        overlay.innerHTML = `
+          <p>🔒 Credit Quest is a Pro feature</p>
+          <button class="locked-overlay-btn" onclick="showUpgradeModal()">Upgrade to Pro — $17/mo →</button>
+        `;
+        gamWidget.appendChild(overlay);
+      }
+    }
+
+    // Parse limit check for free users (1/month)
+    if (!isPro) {
+      try {
+        const parseKey = 'parseur10x_free_parse_' + new Date().getFullYear() + '-' + (new Date().getMonth() + 1);
+        const parseCount = parseInt(localStorage.getItem(parseKey) || '0');
+        localStorage.setItem(parseKey, (parseCount + 1).toString());
+      } catch(e) {}
+    }
+
+    // Confetti
+    setTimeout(triggerConfetti, 500);
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function scrollToRecs() {
+    document.getElementById('recsList').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ==================== GAMIFICATION UPDATE ====================
+  function updateGamification(data) {
+    const rank = data.rank || 'Credit Rookie';
+    const rankEmojis = { 'Credit Rookie': '🌱', 'Credit Builder': '🔨', 'Credit Warrior': '⚔️', 'Credit Champion': '🏆', 'Credit Master': '👑' };
+    const ranks = ['Credit Rookie', 'Credit Builder', 'Credit Warrior', 'Credit Champion', 'Credit Master'];
+    const rankIdx = ranks.indexOf(rank);
+    const progress = Math.max(20, ((rankIdx + 1) / ranks.length) * 100);
+
+    const gwRank = document.querySelector('.gw-rank');
+    if (gwRank) {
+      gwRank.querySelector('.gw-rank-emoji').textContent = rankEmojis[rank] || '🌱';
+      gwRank.querySelector('.gw-rank-name').textContent = rank;
+      gwRank.querySelector('.gw-rank-next').textContent = rankIdx < ranks.length - 1 ? 'Next: ' + ranks[rankIdx + 1] : 'Max rank achieved!';
+    }
+    const gwFill = document.querySelector('.gw-progress-fill');
+    if (gwFill) gwFill.style.width = progress + '%';
+    const gwLabel = document.querySelector('.gw-progress-label');
+    if (gwLabel) gwLabel.textContent = (rankIdx + 1) + '/' + ranks.length + ' milestones completed';
+  }
+
+  // ==================== DISPUTE LETTERS (DYNAMIC) ====================
+  APP_STATE.disputeLetters = {};
+  APP_STATE.pendingLetterId = null;
+
+  // Load saved user info
+  try {
+    const saved = localStorage.getItem('parseur10x_user_info');
+    if (saved) APP_STATE.userInfo = JSON.parse(saved);
+  } catch(e) {}
+
+  function showDisputeLetter(itemId) {
+    const analysis = APP_STATE.analysis;
+    if (!analysis) return;
+
+    const letter = (analysis.disputeLetters || []).find(l => l.itemId === itemId);
+    if (!letter) {
+      showToast('No dispute letter available for this item.', 'info');
+      return;
+    }
+
+    if (!APP_STATE.isPro) {
+      showUpgradeModal();
+      showToast('Dispute letters are a Pro feature. Upgrade to unlock.', 'info');
+      return;
+    }
+
+    // Check if we have user info, if not ask for it first
+    if (!APP_STATE.userInfo) {
+      APP_STATE.pendingLetterId = itemId;
+      document.getElementById('userInfoModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.getElementById('userFullName').focus(), 300);
+      return;
+    }
+
+    // We have user info — render the letter with placeholders filled
+    renderLetter(letter);
+  }
+
+  function saveUserInfo() {
+    const name = document.getElementById('userFullName').value.trim();
+    const address = document.getElementById('userAddress').value.trim();
+    const cityStateZip = document.getElementById('userCityStateZip').value.trim();
+
+    if (!name || !address || !cityStateZip) {
+      showToast('Please fill in all fields.', 'warning');
+      return;
+    }
+
+    APP_STATE.userInfo = { name, address, cityStateZip };
+    try { localStorage.setItem('parseur10x_user_info', JSON.stringify(APP_STATE.userInfo)); } catch(e) {}
+
+    // Close info modal
+    document.getElementById('userInfoModal').classList.remove('open');
+
+    // If we have a pending letter, show it now
+    if (APP_STATE.pendingLetterId) {
+      const analysis = APP_STATE.analysis;
+      const letter = (analysis.disputeLetters || []).find(l => l.itemId === APP_STATE.pendingLetterId);
+      APP_STATE.pendingLetterId = null;
+      if (letter) renderLetter(letter);
+      else document.body.style.overflow = '';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
+
+  function renderLetter(letter) {
+    const info = APP_STATE.userInfo;
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Replace all placeholder variants
+    let body = letter.letterBody;
+    if (info) {
+      body = body
+        .replace(/\[YOUR NAME\]/gi, info.name)
+        .replace(/\[YOUR FULL NAME\]/gi, info.name)
+        .replace(/\[YOUR ADDRESS\]/gi, info.address + '\n' + info.cityStateZip)
+        .replace(/\[YOUR STREET ADDRESS\]/gi, info.address)
+        .replace(/\[CITY, STATE ZIP\]/gi, info.cityStateZip)
+        .replace(/\[DATE\]/gi, today)
+        .replace(/\[TODAY'S DATE\]/gi, today)
+        .replace(/\[YOUR SIGNATURE\]/gi, info.name)
+        .replace(/\[YOUR PRINTED NAME\]/gi, info.name)
+        .replace(/\[YOUR PHONE NUMBER\]/gi, '[Phone optional — written correspondence preferred]')
+        .replace(/\[PHONE NUMBER\]/gi, '[Phone optional — written correspondence preferred]');
+    }
+
+    // Remove "Send via Certified Mail" lines from letter body (we show it in UI instead)
+    body = body
+      .replace(/\n*Send via Certified Mail[,.]? ?Return Receipt Requested\.?\n*/gi, '\n')
+      .replace(/\n*Sent via Certified Mail[,.]? ?Return Receipt Requested\.?\n*/gi, '\n')
+      .replace(/\n*Tracking #:?\s*_{0,20}\n*/gi, '\n');
+
+    document.getElementById('modalTitle').textContent = letter.letterType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + ' — ' + letter.recipientName;
+    document.getElementById('letterContent').textContent = body;
+    document.getElementById('letterModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('letterModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function copyLetter() {
+    const text = document.getElementById('letterContent').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.modal-actions .btn-sm.primary');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => btn.textContent = '📋 Copy to Clipboard', 2000);
+    });
+  }
+
+  function printLetter() {
+    window.print();
+  }
+
+  // ==================== CONFETTI ====================
+  function triggerConfetti() {
+    const container = document.getElementById('confettiContainer');
+    const colors = ['#2563EB', '#059669', '#F59E0B', '#DC2626', '#8B5CF6', '#EC4899'];
+
+    for (let i = 0; i < 60; i++) {
+      const piece = document.createElement('div');
+      piece.classList.add('confetti-piece');
+      piece.style.left = Math.random() * 100 + '%';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDelay = Math.random() * 1.5 + 's';
+      piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      piece.style.width = (6 + Math.random() * 8) + 'px';
+      piece.style.height = (6 + Math.random() * 8) + 'px';
+      container.appendChild(piece);
+    }
+
+    setTimeout(() => container.innerHTML = '', 5000);
+  }
+
+  // ==================== RESET ====================
+  function resetProcessingSteps() {
+    document.querySelectorAll('.processing-step').forEach(s => {
+      s.classList.remove('active', 'done');
+      s.querySelector('.step-indicator').textContent = s.id.replace('step', '');
+    });
+  }
+
+  function resetApp() {
+    document.getElementById('resultsState').style.display = 'none';
+    document.getElementById('uploadState').style.display = 'block';
+    document.getElementById('fileInput').value = '';
+    APP_STATE.analysis = null;
+    try { sessionStorage.removeItem('parseur10x_analysis'); } catch(e) {}
+    resetProcessingSteps();
+    // Remove any unlock banners
+    document.querySelectorAll('.unlock-banner').forEach(b => b.remove());
+  }
+
+  // Close modal on escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+  document.getElementById('letterModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('letterModal')) closeModal();
+  });
+</script>
+
+</body>
+</html>
