@@ -492,6 +492,8 @@
     border-radius: var(--radius-lg);
     padding: 24px;
     margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
   }
   .gw-title {
     font-family: var(--font-display);
@@ -787,6 +789,72 @@
     font-weight: 600;
     margin-top: 8px;
     display: none;
+  }
+
+  /* ==================== AFFILIATE CTA CARDS ==================== */
+  .aff-cta-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border: 2px solid;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .aff-cta-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .aff-cta-card.kikoff {
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    border-color: #059669;
+  }
+  .aff-cta-card.ava {
+    background: linear-gradient(135deg, #FFF8E7 0%, #FEF3C7 100%);
+    border-color: #D97706;
+  }
+  .aff-cta-card.identityiq {
+    background: linear-gradient(135deg, #EFF4FF 0%, #DBEAFE 100%);
+    border-color: #2563EB;
+  }
+  .aff-cta-left { flex: 1; }
+  .aff-cta-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    opacity: 0.8;
+  }
+  .aff-cta-text {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .aff-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--text-primary);
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.2s;
+    flex-shrink: 0;
+  }
+  .aff-cta-btn:hover {
+    background: var(--accent);
+    transform: translateY(-1px);
+  }
+  @media (max-width: 768px) {
+    .aff-cta-card { flex-direction: column; text-align: center; }
   }
 
   /* ==================== GATED/LOCKED ITEMS ==================== */
@@ -1576,7 +1644,7 @@
       const existingLockLabel = scoreCard.querySelector('.score-locked-label');
       if (existingLockLabel) existingLockLabel.remove();
       document.getElementById('scoreNum').textContent = score;
-      document.getElementById('scoreLabel').textContent = (data.rank || 'Credit Rookie');
+      document.getElementById('scoreLabel').textContent = (data.rank || 'Credit Rookie') + ' · PARSEUR Score';
       const offset = 339 - (Math.min(score, 1000) / 1000 * 339);
       const ringEl = document.getElementById('scoreRing');
       const ringColor = score < 300 ? '#DC2626' : score < 500 ? '#D97706' : score < 700 ? '#F59E0B' : '#059669';
@@ -1693,13 +1761,21 @@
 
       if (isVisible) {
         let affHtml = '';
-        if (isPro && aff) {
-          affHtml = `<a href="${aff.url}" target="_blank" rel="noopener sponsored" class="rec-affiliate">${aff.label}</a>`;
-          if (aff.pixel) affHtml += `<img height="0" width="0" src="${aff.pixel}" style="position:absolute;visibility:hidden;" border="0" />`;
+        if (aff) {
+          affHtml = `
+            <div class="aff-cta-card ${rec.affiliateHook}">
+              <div class="aff-cta-left">
+                <div class="aff-cta-badge">${rec.affiliateHook === 'kikoff' ? '🏗️ Recommended' : rec.affiliateHook === 'ava' ? '💳 Recommended' : '🔍 Recommended'}</div>
+                <div class="aff-cta-text">${aff.label.replace(' →', '')}</div>
+              </div>
+              <a href="${aff.url}" target="_blank" rel="noopener sponsored" class="aff-cta-btn">Get Started →</a>
+              ${aff.pixel ? `<img height="0" width="0" src="${aff.pixel}" style="position:absolute;visibility:hidden;" border="0" />` : ''}
+            </div>
+          `;
         }
 
         recsHtml += `
-          <div class="rec-card" ${affStyle && isPro ? `style="${affStyle}"` : ''}>
+          <div class="rec-card" ${affStyle ? `style="${affStyle}"` : ''}>
             <div class="rec-icon">${recIcons[i + 1] || '💡'}</div>
             <div class="rec-content">
               <h4>${escHtml(rec.title)}${rec.estimatedGain ? ` <span style="color:var(--success);font-size:0.82rem;">${escHtml(rec.estimatedGain)}</span>` : ''}</h4>
@@ -1735,24 +1811,23 @@
     }
     document.getElementById('recsList').innerHTML = recsHtml;
 
-    // ===== SIDEBAR: Gamification + Affiliates (Pro only) =====
-    const sidebar = document.getElementById('resultsSidebar');
+    // ===== SIDEBAR: Gamification (Pro only) + Affiliates (always visible) =====
+    const gamWidget = document.getElementById('gamificationWidget');
     if (isPro) {
-      sidebar.classList.remove('sidebar-locked');
-      const existingOverlay = sidebar.querySelector('.sidebar-locked-overlay');
+      gamWidget.classList.remove('sidebar-locked');
+      const existingOverlay = gamWidget.querySelector('.sidebar-locked-overlay');
       if (existingOverlay) existingOverlay.remove();
       updateGamification(data);
     } else {
-      sidebar.classList.add('sidebar-locked');
-      // Add overlay if not already there
-      if (!sidebar.querySelector('.sidebar-locked-overlay')) {
+      gamWidget.classList.add('sidebar-locked');
+      if (!gamWidget.querySelector('.sidebar-locked-overlay')) {
         const overlay = document.createElement('div');
         overlay.className = 'sidebar-locked-overlay';
         overlay.innerHTML = `
-          <p>🔒 Credit Quest & tools are Pro features</p>
+          <p>🔒 Credit Quest is a Pro feature</p>
           <button class="locked-overlay-btn" onclick="showUpgradeModal()">Upgrade to Pro — $17/mo →</button>
         `;
-        sidebar.appendChild(overlay);
+        gamWidget.appendChild(overlay);
       }
     }
 
