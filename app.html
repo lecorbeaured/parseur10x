@@ -789,6 +789,120 @@
     display: none;
   }
 
+  /* ==================== GATED/LOCKED ITEMS ==================== */
+  .neg-item.locked {
+    position: relative;
+    user-select: none;
+    pointer-events: none;
+  }
+  .neg-item.locked .neg-item-info,
+  .neg-item.locked .neg-impact,
+  .neg-item.locked .neg-action {
+    filter: blur(6px);
+    opacity: 0.5;
+  }
+  .locked-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    pointer-events: auto;
+  }
+  .locked-overlay-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+    transition: transform 0.2s, background 0.2s;
+  }
+  .locked-overlay-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+  }
+  .locked-more-banner {
+    background: linear-gradient(135deg, var(--accent-light) 0%, #EDE9FE 100%);
+    border: 2px dashed var(--accent);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    margin-top: 4px;
+  }
+  .locked-more-banner h3 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .locked-more-banner p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+  }
+  .score-locked {
+    position: relative;
+  }
+  .score-locked .score-ring,
+  .score-locked .score-num {
+    filter: blur(8px);
+    opacity: 0.4;
+  }
+  .score-locked-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--accent);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 100px;
+    white-space: nowrap;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .rec-card.locked {
+    position: relative;
+    user-select: none;
+  }
+  .rec-card.locked .rec-icon,
+  .rec-card.locked .rec-content {
+    filter: blur(5px);
+    opacity: 0.5;
+  }
+  .sidebar-locked {
+    position: relative;
+  }
+  .sidebar-locked > * {
+    filter: blur(5px);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .sidebar-locked-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    text-align: center;
+    width: 80%;
+  }
+  .sidebar-locked-overlay p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
   /* Toast Notifications */
   .toast {
     position: fixed;
@@ -946,9 +1060,9 @@
       </div>
 
       <!-- RIGHT: Sidebar -->
-      <div>
+      <div id="resultsSidebar">
         <!-- Gamification Widget -->
-        <div class="gamification-widget">
+        <div class="gamification-widget" id="gamificationWidget">
           <div class="gw-title">🎮 Credit Quest</div>
           <div class="gw-rank">
             <div class="gw-rank-emoji">🌱</div>
@@ -1306,6 +1420,20 @@
       showToast('File too large. Max 20MB.', 'warning');
       return;
     }
+
+    // Free user: 1 parse per month limit
+    if (!APP_STATE.isPro) {
+      try {
+        const parseKey = 'parseur10x_free_parse_' + new Date().getFullYear() + '-' + (new Date().getMonth() + 1);
+        const parseCount = parseInt(localStorage.getItem(parseKey) || '0');
+        if (parseCount >= 1) {
+          showToast('Free plan limit reached — 1 parse per month. Upgrade to Pro for unlimited.', 'warning');
+          setTimeout(() => showUpgradeModal(), 1500);
+          return;
+        }
+      } catch(e) {}
+    }
+
     APP_STATE.fileName = file.name;
     startProcessing(file);
   }
@@ -1433,24 +1561,40 @@
       year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
 
-    if (APP_STATE.isPro) {
+    const isPro = APP_STATE.isPro;
+
+    // Pro banner
+    if (isPro) {
       document.getElementById('proBanner').style.display = 'none';
     }
 
-    // Credit Health Score
+    // ===== CREDIT HEALTH SCORE (Pro only) =====
     const score = data.creditHealthScore || 0;
-    document.getElementById('scoreNum').textContent = score;
-    document.getElementById('scoreLabel').textContent = (data.rank || 'Credit Rookie');
-    // Animate ring (339 circumference, offset = 339 - (score/1000 * 339))
-    const offset = 339 - (Math.min(score, 1000) / 1000 * 339);
-    const ringEl = document.getElementById('scoreRing');
-    // Color based on score
-    const ringColor = score < 300 ? '#DC2626' : score < 500 ? '#D97706' : score < 700 ? '#F59E0B' : '#059669';
-    ringEl.style.stroke = ringColor;
-    document.getElementById('scoreNum').style.color = ringColor;
-    setTimeout(() => { ringEl.style.strokeDashoffset = offset; }, 300);
+    const scoreCard = document.querySelector('.score-card');
+    if (isPro) {
+      scoreCard.classList.remove('score-locked');
+      const existingLockLabel = scoreCard.querySelector('.score-locked-label');
+      if (existingLockLabel) existingLockLabel.remove();
+      document.getElementById('scoreNum').textContent = score;
+      document.getElementById('scoreLabel').textContent = (data.rank || 'Credit Rookie');
+      const offset = 339 - (Math.min(score, 1000) / 1000 * 339);
+      const ringEl = document.getElementById('scoreRing');
+      const ringColor = score < 300 ? '#DC2626' : score < 500 ? '#D97706' : score < 700 ? '#F59E0B' : '#059669';
+      ringEl.style.stroke = ringColor;
+      document.getElementById('scoreNum').style.color = ringColor;
+      setTimeout(() => { ringEl.style.strokeDashoffset = offset; }, 300);
+    } else {
+      scoreCard.classList.add('score-locked');
+      document.getElementById('scoreNum').textContent = '???';
+      document.getElementById('scoreLabel').textContent = 'Upgrade to reveal';
+      const lockLabel = document.createElement('div');
+      lockLabel.className = 'score-locked-label';
+      lockLabel.textContent = '🔒 Pro Only';
+      lockLabel.onclick = () => showUpgradeModal();
+      scoreCard.appendChild(lockLabel);
+    }
 
-    // Report Overview
+    // ===== REPORT OVERVIEW (always visible) =====
     const summary = data.summary || {};
     document.getElementById('reportOverview').innerHTML = `
       <div class="stat-row"><span>Total Accounts</span> <span class="stat-value">${summary.totalAccounts || '—'}</span></div>
@@ -1461,7 +1605,7 @@
       ${summary.creditScore ? `<div class="stat-row"><span>Credit Score</span> <span class="stat-value">${summary.creditScore} (${summary.creditScoreLabel || ''})</span></div>` : ''}
     `;
 
-    // Issue Breakdown
+    // ===== ISSUE BREAKDOWN (always visible) =====
     const negs = data.negativeItems || [];
     const highCount = negs.filter(n => n.impact === 'high').length;
     const medCount = negs.filter(n => n.impact === 'medium').length;
@@ -1476,59 +1620,152 @@
       <div class="stat-row"><span>Dispute Priority</span> <span class="stat-value ${highCount > 0 ? 'red' : 'green'}">${highCount > 0 ? 'High' : medCount > 0 ? 'Medium' : 'Low'}</span></div>
     `;
 
-    // Negative Items
+    // ===== NEGATIVE ITEMS (Free: 1 visible, rest locked) =====
     document.getElementById('negCount').textContent = negs.length + ' items found';
-    const negHtml = negs.map(item => {
-      const hasLetter = (data.disputeLetters || []).find(l => l.itemId === item.id);
-      const actionBtn = hasLetter
-        ? `<button class="neg-action" onclick="showDisputeLetter('${item.id}')">Generate Letter ✉️</button>`
-        : `<button class="neg-action" onclick="scrollToRecs()">See Fix →</button>`;
+    let negHtml = '';
 
-      return `
-        <div class="neg-item">
-          <div class="neg-item-info">
-            <h4>${escHtml(item.creditor)} — ${escHtml(item.type)}</h4>
-            <p>${escHtml(item.details)}</p>
+    if (negs.length === 0) {
+      negHtml = '<div style="padding:24px;text-align:center;color:var(--text-muted);">No negative items found — your report looks clean! 🎉</div>';
+    } else {
+      negs.forEach((item, i) => {
+        const hasLetter = (data.disputeLetters || []).find(l => l.itemId === item.id);
+        const isVisible = isPro || i === 0; // Free users see only first item
+
+        if (isVisible) {
+          const actionBtn = hasLetter
+            ? (isPro
+              ? `<button class="neg-action" onclick="showDisputeLetter('${item.id}')">Generate Letter ✉️</button>`
+              : `<button class="neg-action pro-only" onclick="showUpgradeModal()">🔒 Pro: Generate Letter</button>`)
+            : `<button class="neg-action" onclick="scrollToRecs()">See Fix →</button>`;
+
+          negHtml += `
+            <div class="neg-item">
+              <div class="neg-item-info">
+                <h4>${escHtml(item.creditor)} — ${escHtml(item.type)}</h4>
+                <p>${escHtml(item.details)}</p>
+              </div>
+              <span class="neg-impact ${item.impact}">${item.impact === 'high' ? 'High Impact' : item.impact === 'medium' ? 'Medium' : 'Low Impact'}</span>
+              ${actionBtn}
+            </div>
+          `;
+        } else {
+          // Locked item — blurred with overlay
+          negHtml += `
+            <div class="neg-item locked">
+              <div class="neg-item-info">
+                <h4>${escHtml(item.creditor)} — ${escHtml(item.type)}</h4>
+                <p>${escHtml(item.details)}</p>
+              </div>
+              <span class="neg-impact ${item.impact}">${item.impact === 'high' ? 'High Impact' : item.impact === 'medium' ? 'Medium' : 'Low Impact'}</span>
+              <button class="neg-action">Generate Letter ✉️</button>
+              <div class="locked-overlay">
+                <button class="locked-overlay-btn" onclick="showUpgradeModal()">🔒 Unlock with Pro</button>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      // Add upgrade banner after locked items for free users
+      if (!isPro && negs.length > 1) {
+        negHtml += `
+          <div class="locked-more-banner">
+            <h3>🔓 ${negs.length - 1} more item${negs.length - 1 > 1 ? 's' : ''} found — Upgrade to see all</h3>
+            <p>Pro members see every negative item with full details, impact scores, and AI-generated dispute letters.</p>
+            <button class="locked-overlay-btn" onclick="showUpgradeModal()">Upgrade to Pro — $17/mo →</button>
           </div>
-          <span class="neg-impact ${item.impact}">${item.impact === 'high' ? 'High Impact' : item.impact === 'medium' ? 'Medium' : 'Low Impact'}</span>
-          ${actionBtn}
-        </div>
-      `;
-    }).join('');
-    document.getElementById('negItemsList').innerHTML = negHtml || '<div style="padding:24px;text-align:center;color:var(--text-muted);">No negative items found — your report looks clean! 🎉</div>';
+        `;
+      }
+    }
+    document.getElementById('negItemsList').innerHTML = negHtml;
 
-    // Recommendations
+    // ===== RECOMMENDATIONS (Free: 1 visible, rest locked) =====
     const recs = data.recommendations || [];
     const recIcons = { 1: '🎯', 2: '💌', 3: '📉', 4: '🏗️', 5: '💳', 6: '🔍' };
-    const recsHtml = recs.map((rec, i) => {
+    let recsHtml = '';
+
+    recs.forEach((rec, i) => {
+      const isVisible = isPro || i === 0;
       const aff = rec.affiliateHook && AFFILIATES[rec.affiliateHook];
       const affStyle = rec.affiliateHook === 'kikoff' ? 'background:var(--success-light);border-color:rgba(5,150,105,0.15);'
         : rec.affiliateHook === 'ava' ? 'background:var(--pro-gold-light);border-color:rgba(184,134,11,0.15);'
         : '';
 
-      let affHtml = '';
-      if (aff) {
-        affHtml = `<a href="${aff.url}" target="_blank" rel="noopener sponsored" class="rec-affiliate">${aff.label}</a>`;
-        if (aff.pixel) affHtml += `<img height="0" width="0" src="${aff.pixel}" style="position:absolute;visibility:hidden;" border="0" />`;
-      }
+      if (isVisible) {
+        let affHtml = '';
+        if (isPro && aff) {
+          affHtml = `<a href="${aff.url}" target="_blank" rel="noopener sponsored" class="rec-affiliate">${aff.label}</a>`;
+          if (aff.pixel) affHtml += `<img height="0" width="0" src="${aff.pixel}" style="position:absolute;visibility:hidden;" border="0" />`;
+        }
 
-      return `
-        <div class="rec-card" ${affStyle ? `style="${affStyle}"` : ''}>
-          <div class="rec-icon">${recIcons[i + 1] || '💡'}</div>
-          <div class="rec-content">
-            <h4>${escHtml(rec.title)}${rec.estimatedGain ? ` <span style="color:var(--success);font-size:0.82rem;">${escHtml(rec.estimatedGain)}</span>` : ''}</h4>
-            <p>${escHtml(rec.description)}</p>
-            ${affHtml}
+        recsHtml += `
+          <div class="rec-card" ${affStyle && isPro ? `style="${affStyle}"` : ''}>
+            <div class="rec-icon">${recIcons[i + 1] || '💡'}</div>
+            <div class="rec-content">
+              <h4>${escHtml(rec.title)}${rec.estimatedGain ? ` <span style="color:var(--success);font-size:0.82rem;">${escHtml(rec.estimatedGain)}</span>` : ''}</h4>
+              <p>${escHtml(rec.description)}</p>
+              ${affHtml}
+            </div>
           </div>
+        `;
+      } else {
+        recsHtml += `
+          <div class="rec-card locked">
+            <div class="rec-icon">${recIcons[i + 1] || '💡'}</div>
+            <div class="rec-content">
+              <h4>${escHtml(rec.title)}</h4>
+              <p>${escHtml(rec.description)}</p>
+            </div>
+            <div class="locked-overlay">
+              <button class="locked-overlay-btn" onclick="showUpgradeModal()">🔒 Unlock with Pro</button>
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    if (!isPro && recs.length > 1) {
+      recsHtml += `
+        <div class="locked-more-banner">
+          <h3>🔓 ${recs.length - 1} more recommendation${recs.length - 1 > 1 ? 's' : ''} — Upgrade to unlock</h3>
+          <p>Pro members get full fix strategies, dispute letters, and personalized credit building tools.</p>
+          <button class="locked-overlay-btn" onclick="showUpgradeModal()">Upgrade to Pro — $17/mo →</button>
         </div>
       `;
-    }).join('');
+    }
     document.getElementById('recsList').innerHTML = recsHtml;
 
-    // Update gamification sidebar
-    updateGamification(data);
+    // ===== SIDEBAR: Gamification + Affiliates (Pro only) =====
+    const sidebar = document.getElementById('resultsSidebar');
+    if (isPro) {
+      sidebar.classList.remove('sidebar-locked');
+      const existingOverlay = sidebar.querySelector('.sidebar-locked-overlay');
+      if (existingOverlay) existingOverlay.remove();
+      updateGamification(data);
+    } else {
+      sidebar.classList.add('sidebar-locked');
+      // Add overlay if not already there
+      if (!sidebar.querySelector('.sidebar-locked-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-locked-overlay';
+        overlay.innerHTML = `
+          <p>🔒 Credit Quest & tools are Pro features</p>
+          <button class="locked-overlay-btn" onclick="showUpgradeModal()">Upgrade to Pro — $17/mo →</button>
+        `;
+        sidebar.appendChild(overlay);
+      }
+    }
 
-    // Confetti on first parse
+    // Parse limit check for free users (1/month)
+    if (!isPro) {
+      try {
+        const parseKey = 'parseur10x_free_parse_' + new Date().getFullYear() + '-' + (new Date().getMonth() + 1);
+        const parseCount = parseInt(localStorage.getItem(parseKey) || '0');
+        localStorage.setItem(parseKey, (parseCount + 1).toString());
+      } catch(e) {}
+    }
+
+    // Confetti
     setTimeout(triggerConfetti, 500);
   }
 
