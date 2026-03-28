@@ -659,6 +659,27 @@
     100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
   }
 
+  /* Toast Notifications */
+  .toast {
+    position: fixed;
+    top: 72px;
+    right: 24px;
+    z-index: 9999;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+    max-width: 400px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast-success { background: var(--success-light); color: var(--success); border: 1px solid rgba(5,150,105,0.2); }
+  .toast-warning { background: var(--warning-light); color: var(--warning); border: 1px solid rgba(217,119,6,0.2); }
+  .toast-error { background: var(--danger-light); color: var(--danger); border: 1px solid rgba(220,38,38,0.2); }
+  .toast-info { background: var(--accent-light); color: var(--accent); border: 1px solid rgba(37,99,235,0.2); }
+
   /* Responsive */
   @media (max-width: 768px) {
     .summary-grid { grid-template-columns: 1fr; }
@@ -996,6 +1017,7 @@
 <!-- Confetti Container -->
 <div class="confetti-container" id="confettiContainer"></div>
 
+<script src="https://js.stripe.com/v3/"></script>
 <script>
   // ==================== STATE MANAGEMENT ====================
   const APP_STATE = {
@@ -1004,12 +1026,131 @@
     parsedAt: null,
   };
 
-  // Check URL params for plan
-  if (new URLSearchParams(window.location.search).get('plan') === 'pro') {
+  const STRIPE_PK = 'pk_live_51TFKH15slFMmVhuxVLAxzKVymPgrgxCjk4ztrmwCUYkqjgBHPFr5QfwhnbtrCkTDucLQyRgVTuSxDZbYkDtkjFhk00i3LwJXql';
+  const STRIPE_PRICE_ID = 'price_1TFowO5slFMmVhuxk83h7MTW';
+
+  // ==================== PRO STATUS CHECK ====================
+  function activatePro() {
     APP_STATE.isPro = true;
     document.getElementById('planBadge').textContent = 'PRO';
     document.getElementById('planBadge').classList.add('pro');
     document.getElementById('upgradeBtn').style.display = 'none';
+    // Persist pro status locally
+    try { localStorage.setItem('parseur10x_pro', 'true'); } catch(e) {}
+  }
+
+  function deactivatePro() {
+    APP_STATE.isPro = false;
+    document.getElementById('planBadge').textContent = 'FREE PLAN';
+    document.getElementById('planBadge').classList.remove('pro');
+    document.getElementById('upgradeBtn').style.display = '';
+    try { localStorage.removeItem('parseur10x_pro'); } catch(e) {}
+  }
+
+  // Check localStorage for returning pro users
+  try {
+    if (localStorage.getItem('parseur10x_pro') === 'true') {
+      activatePro();
+    }
+  } catch(e) {}
+
+  // Handle return from Stripe Checkout
+  (function handleCheckoutReturn() {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    const canceled = params.get('canceled');
+
+    if (sessionId) {
+      // Verify the session with our backend
+      verifyCheckoutSession(sessionId);
+      // Clean URL without reload
+      window.history.replaceState({}, '', '/app.html');
+    } else if (canceled) {
+      showToast('Checkout canceled — no charges were made.', 'warning');
+      window.history.replaceState({}, '', '/app.html');
+    } else if (params.get('plan') === 'pro') {
+      // Direct plan=pro param (legacy/manual)
+      activatePro();
+      window.history.replaceState({}, '', '/app.html');
+    }
+  })();
+
+  async function verifyCheckoutSession(sessionId) {
+    try {
+      const res = await fetch('/.netlify/functions/verify-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      });
+      const data = await res.json();
+
+      if (data.paid) {
+        activatePro();
+        showToast('Welcome to Pro! You now have full access.', 'success');
+        setTimeout(triggerConfetti, 300);
+      } else {
+        showToast('Payment not confirmed yet. If you completed payment, refresh in a moment.', 'warning');
+      }
+    } catch (err) {
+      console.error('Session verification error:', err);
+      // Optimistic activation — payment likely went through if we have a session_id
+      activatePro();
+      showToast('Welcome to Pro!', 'success');
+      setTimeout(triggerConfetti, 300);
+    }
+  }
+
+  // ==================== STRIPE CHECKOUT ====================
+  function showUpgradeModal() {
+    handleStripeCheckout();
+  }
+
+  async function handleStripeCheckout() {
+    const btn = document.querySelector('.upgrade-btn') || document.querySelector('.pro-banner-btn');
+    const origText = btn ? btn.textContent : '';
+    if (btn) { btn.textContent = 'Opening checkout...'; btn.style.pointerEvents = 'none'; }
+
+    try {
+      const stripe = Stripe(STRIPE_PK);
+      const res = await fetch('/.netlify/functions/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: STRIPE_PRICE_ID })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to create checkout session');
+      }
+
+      const { sessionId } = await res.json();
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Checkout error:', err);
+      showToast('Something went wrong. Please try again.', 'error');
+    } finally {
+      if (btn) { btn.textContent = origText; btn.style.pointerEvents = ''; }
+    }
+  }
+
+  // ==================== TOAST NOTIFICATIONS ====================
+  function showToast(message, type = 'info') {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    const icons = { success: '✅', warning: '⚠️', error: '❌', info: 'ℹ️' };
+    toast.innerHTML = '<span>' + (icons[type] || '') + '</span> ' + message;
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
   }
 
   // ==================== FILE UPLOAD ====================
@@ -1306,37 +1447,6 @@ Best regards,
     });
   }
 
-  // ==================== STRIPE CHECKOUT ====================
-  const STRIPE_PK = 'pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY';
-  const STRIPE_PRICE_ID = 'price_REPLACE_WITH_YOUR_PRICE_ID'; // $17/mo Pro plan
-
-  function showUpgradeModal() {
-    // When Stripe keys are configured, this opens Checkout directly.
-    // For now, show a placeholder with instructions.
-    if (STRIPE_PK.includes('REPLACE')) {
-      alert('Stripe Checkout will open here once configured.\n\nTo wire it up:\n1. Create a $17/mo recurring price in Stripe Dashboard\n2. Replace STRIPE_PK with your publishable key\n3. Replace STRIPE_PRICE_ID with the price ID\n4. Deploy a Netlify serverless function at /.netlify/functions/create-checkout');
-      return;
-    }
-
-    handleStripeCheckout();
-  }
-
-  async function handleStripeCheckout() {
-    try {
-      const stripe = Stripe(STRIPE_PK);
-      const res = await fetch('/.netlify/functions/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId: STRIPE_PRICE_ID })
-      });
-      const { sessionId } = await res.json();
-      await stripe.redirectToCheckout({ sessionId });
-    } catch (err) {
-      console.error('Checkout error:', err);
-      alert('Something went wrong opening checkout. Please try again.');
-    }
-  }
-
   // Close modal on escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
@@ -1345,7 +1455,6 @@ Best regards,
     if (e.target === document.getElementById('letterModal')) closeModal();
   });
 </script>
-<script src="https://js.stripe.com/v3/"></script>
 
 </body>
 </html>

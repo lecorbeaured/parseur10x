@@ -26,11 +26,13 @@ exports.handler = async (event) => {
   try {
     const { priceId } = JSON.parse(event.body || '{}');
     
-    if (!priceId) {
+    // Only allow the known Pro plan price ID
+    const ALLOWED_PRICE = 'price_1TFowO5slFMmVhuxk83h7MTW';
+    if (!priceId || priceId !== ALLOWED_PRICE) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Missing priceId' }),
+        body: JSON.stringify({ error: 'Invalid price' }),
       };
     }
 
