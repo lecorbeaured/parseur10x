@@ -1,8 +1,0 @@
-{
-  "name": "parseur10x-functions",
-  "version": "1.0.0",
-  "description": "Serverless functions for PARSEUR 10X",
-  "dependencies": {
-    "stripe": "^14.0.0"
-  }
-}
