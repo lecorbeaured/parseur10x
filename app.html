@@ -1161,8 +1161,8 @@
 
   // ==================== CLAUDE API ANALYSIS ====================
   async function analyzeReport(reportText) {
-    // Truncate client-side to keep request small (server also truncates)
-    const trimmed = reportText.substring(0, 40000);
+    // Truncate client-side — 20k chars is enough for most credit reports
+    const trimmed = reportText.substring(0, 20000);
     console.log('Sending report text:', trimmed.length, 'chars');
 
     const res = await fetch('/.netlify/functions/parse-report', {

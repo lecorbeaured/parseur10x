@@ -47,70 +47,17 @@ exports.handler = async (event) => {
       };
     }
 
-    // Truncate to ~40k chars to stay within timeout limits
-    const truncated = reportText.substring(0, 40000);
+    // Truncate to ~20k chars for speed
+    const truncated = reportText.substring(0, 20000);
 
-    const prompt = `You are a professional credit report analyst. Analyze the following credit report text and return a JSON object with your findings.
+    const prompt = `Analyze this credit report. Return ONLY valid JSON, no markdown or backticks.
 
-IMPORTANT: Return ONLY valid JSON, no markdown, no backticks, no explanation outside the JSON.
+JSON structure:
+{"summary":{"totalAccounts":0,"openAccounts":0,"closedAccounts":0,"totalBalance":"$0","hardInquiries":0,"creditScore":null,"creditScoreLabel":""},"negativeItems":[{"id":"neg1","creditor":"","type":"Late Payment|Collection|Charge-Off|High Utilization|Inquiry|Other","details":"","impact":"high|medium|low","impactScore":0,"fixStrategy":"dispute|goodwill|pay-for-delete|pay-down|wait","fixExplanation":""}],"recommendations":[{"priority":1,"title":"","description":"","estimatedGain":"+0 pts","affiliateHook":"kikoff|ava|identityiq|none"}],"disputeLetters":[{"itemId":"neg1","letterType":"debt_validation|goodwill|pay_for_delete|dispute_inaccuracy","recipientName":"","recipientAddress":"","letterBody":"Full letter with [YOUR NAME],[YOUR ADDRESS],[DATE] placeholders citing FCRA/FDCPA"}],"creditHealthScore":0,"rank":"Credit Rookie|Credit Builder|Credit Warrior|Credit Champion|Credit Master"}
 
-The JSON must have this exact structure:
-{
-  "summary": {
-    "totalAccounts": <number>,
-    "openAccounts": <number>,
-    "closedAccounts": <number>,
-    "totalBalance": "<string like $23,450>",
-    "hardInquiries": <number>,
-    "creditScore": <number or null if not found>,
-    "creditScoreLabel": "<string: Poor/Fair/Good/Very Good/Excellent>"
-  },
-  "negativeItems": [
-    {
-      "id": "<unique short id like neg1>",
-      "creditor": "<creditor/company name>",
-      "type": "<Late Payment|Collection|Charge-Off|Repossession|Bankruptcy|Judgment|Tax Lien|High Utilization|Inquiry|Other>",
-      "details": "<brief description: account number masked, balance, date, status>",
-      "impact": "<high|medium|low>",
-      "impactScore": <estimated points lost, number>,
-      "fixStrategy": "<dispute|goodwill|pay-for-delete|pay-down|wait|other>",
-      "fixExplanation": "<2-3 sentence explanation of the recommended fix>"
-    }
-  ],
-  "recommendations": [
-    {
-      "priority": <1-based priority number>,
-      "title": "<short action title>",
-      "description": "<2-3 sentence actionable recommendation>",
-      "estimatedGain": "<string like +30-45 pts>",
-      "affiliateHook": "<kikoff|ava|identityiq|none>"
-    }
-  ],
-  "disputeLetters": [
-    {
-      "itemId": "<matches negativeItems id>",
-      "letterType": "<debt_validation|goodwill|pay_for_delete|dispute_inaccuracy|inquiry_removal>",
-      "recipientName": "<company/bureau name>",
-      "recipientAddress": "<mailing address if known, otherwise 'Look up current mailing address'>",
-      "letterBody": "<complete, ready-to-send dispute letter with [YOUR NAME], [YOUR ADDRESS], [DATE] placeholders. Cite specific laws (FCRA, FDCPA) where applicable. Be professional and firm.>"
-    }
-  ],
-  "creditHealthScore": <number 0-1000, calculated based on ratio of negative to positive items, utilization, age of accounts>,
-  "rank": "<Credit Rookie|Credit Builder|Credit Warrior|Credit Champion|Credit Master>"
-}
+Rules: Flag late payments, collections, charge-offs, high utilization >30%, excess inquiries. Sort by impact. Generate dispute letters for disputable items only. Affiliate hooks: kikoff=tradeline building, ava=credit builder card, identityiq=monitoring. Score 0-300=Rookie,301-500=Builder,501-700=Warrior,701-850=Champion,851-1000=Master. Keep dispute letters concise but complete.
 
-Rules:
-- Flag ALL negative items you find: late payments, collections, charge-offs, high utilization (>30%), excessive inquiries (>3 in 12 months), public records
-- For each negative item, recommend the BEST fix strategy
-- Generate dispute letters ONLY for items that can reasonably be disputed (not for high utilization)
-- Sort negativeItems by impact (high first)
-- Sort recommendations by priority (highest impact first)
-- Include affiliate hooks: "kikoff" when recommending tradeline building, "ava" when recommending credit builder cards, "identityiq" when recommending monitoring
-- If the text doesn't appear to be a credit report, set negativeItems to empty array and add a note in recommendations
-- creditHealthScore: 0-300 = Rookie, 301-500 = Builder, 501-700 = Warrior, 701-850 = Champion, 851-1000 = Master
-
-Here is the credit report text:
-
+Credit report:
 ${truncated}`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -122,7 +69,7 @@ ${truncated}`;
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 6000,
+        max_tokens: 4000,
         messages: [
           { role: 'user', content: prompt }
         ],
