@@ -1161,18 +1161,29 @@
 
   // ==================== CLAUDE API ANALYSIS ====================
   async function analyzeReport(reportText) {
+    // Truncate client-side to keep request small (server also truncates)
+    const trimmed = reportText.substring(0, 40000);
+    console.log('Sending report text:', trimmed.length, 'chars');
+
     const res = await fetch('/.netlify/functions/parse-report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reportText }),
+      body: JSON.stringify({ reportText: trimmed }),
     });
 
+    console.log('Function response status:', res.status);
+
     if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error || 'Analysis failed. Please try again.');
+      const errText = await res.text();
+      console.error('Function error response:', errText);
+      let errMsg = 'Analysis failed. Please try again.';
+      try { errMsg = JSON.parse(errText).error || errMsg; } catch(e) {}
+      throw new Error(errMsg);
     }
 
-    return await res.json();
+    const data = await res.json();
+    console.log('Analysis result:', data);
+    return data;
   }
 
   // ==================== RENDER RESULTS ====================
