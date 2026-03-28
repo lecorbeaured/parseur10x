@@ -7,6 +7,11 @@
 //   ANTHROPIC_API_KEY = sk-ant-...
 //
 
+// Extend timeout to 26 seconds (Netlify paid allows up to 26s on background)
+exports.config = {
+  maxDuration: 26,
+};
+
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -42,8 +47,8 @@ exports.handler = async (event) => {
       };
     }
 
-    // Truncate to ~80k chars to stay within token limits
-    const truncated = reportText.substring(0, 80000);
+    // Truncate to ~40k chars to stay within timeout limits
+    const truncated = reportText.substring(0, 40000);
 
     const prompt = `You are a professional credit report analyst. Analyze the following credit report text and return a JSON object with your findings.
 
@@ -116,8 +121,8 @@ ${truncated}`;
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 8000,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 6000,
         messages: [
           { role: 'user', content: prompt }
         ],
