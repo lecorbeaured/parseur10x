@@ -47,8 +47,8 @@ exports.handler = async (event) => {
       };
     }
 
-    // Truncate to ~20k chars for speed
-    const truncated = reportText.substring(0, 20000);
+    // Truncate to ~8k chars for speed
+    const truncated = reportText.substring(0, 8000);
 
     const prompt = `Analyze this credit report. Return ONLY valid JSON, no markdown or backticks.
 
