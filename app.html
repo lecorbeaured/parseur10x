@@ -478,6 +478,37 @@
     white-space: pre-wrap;
     font-family: 'Georgia', serif;
   }
+  .letter-certified-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    border: 1px solid #059669;
+    border-radius: var(--radius);
+  }
+  .letter-certified-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .letter-certified-tip strong {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .letter-certified-tip p {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+  }
+  @media print {
+    body > *:not(.modal-overlay) { display: none !important; }
+    .modal-overlay.open { position: static; background: none; backdrop-filter: none; padding: 0; }
+    .modal { box-shadow: none; max-width: 100%; max-height: none; }
+    .modal-header, .modal-actions, .letter-certified-tip { display: none !important; }
+    .modal-body { padding: 0; }
+    .letter-content { border: none; background: white; padding: 0; font-size: 12pt; line-height: 1.6; }
+  }
   .modal-actions {
     display: flex;
     gap: 12px;
@@ -1383,6 +1414,33 @@
   </div>
 </div>
 
+<!-- ==================== USER INFO MODAL ==================== -->
+<div class="modal-overlay" id="userInfoModal">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h3>📝 Your Information</h3>
+      <button class="modal-close" onclick="document.getElementById('userInfoModal').classList.remove('open');document.body.style.overflow='';">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:20px;">This info will be auto-filled into all your dispute letters so they're ready to print and send.</p>
+      <div class="contact-field">
+        <label>Full Legal Name</label>
+        <input type="text" id="userFullName" placeholder="John A. Doe" style="text-align:left;">
+      </div>
+      <div class="contact-field">
+        <label>Street Address</label>
+        <input type="text" id="userAddress" placeholder="123 Main Street, Apt 4B" style="text-align:left;">
+      </div>
+      <div class="contact-field">
+        <label>City, State ZIP</label>
+        <input type="text" id="userCityStateZip" placeholder="Las Vegas, NV 89101" style="text-align:left;">
+      </div>
+      <button class="email-gate-btn" onclick="saveUserInfo()" style="margin-top:8px;">Save & Generate Letter →</button>
+      <p style="font-size:0.72rem;color:var(--text-muted);margin-top:10px;text-align:center;">🔒 Stored locally on your device only. Never sent to our servers.</p>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== DISPUTE LETTER MODAL ==================== -->
 <div class="modal-overlay" id="letterModal">
   <div class="modal">
@@ -1392,10 +1450,17 @@
     </div>
     <div class="modal-body">
       <div class="letter-content" id="letterContent"></div>
+      <div class="letter-certified-tip">
+        <div class="letter-certified-icon">📬</div>
+        <div>
+          <strong>Send via Certified Mail with Return Receipt Requested</strong>
+          <p>This creates a legal paper trail proving the recipient received your letter. Keep the receipt — you may need it if they don't respond within 30 days. Never call — written communication only.</p>
+        </div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-sm primary" onclick="copyLetter()">📋 Copy to Clipboard</button>
-      <button class="btn-sm" onclick="window.print()">🖨️ Print Letter</button>
+      <button class="btn-sm" onclick="printLetter()">🖨️ Print Letter</button>
       <button class="btn-sm" onclick="closeModal()">Close</button>
     </div>
   </div>
@@ -2168,6 +2233,13 @@
 
   // ==================== DISPUTE LETTERS (DYNAMIC) ====================
   APP_STATE.disputeLetters = {};
+  APP_STATE.pendingLetterId = null;
+
+  // Load saved user info
+  try {
+    const saved = localStorage.getItem('parseur10x_user_info');
+    if (saved) APP_STATE.userInfo = JSON.parse(saved);
+  } catch(e) {}
 
   function showDisputeLetter(itemId) {
     const analysis = APP_STATE.analysis;
@@ -2185,8 +2257,76 @@
       return;
     }
 
+    // Check if we have user info, if not ask for it first
+    if (!APP_STATE.userInfo) {
+      APP_STATE.pendingLetterId = itemId;
+      document.getElementById('userInfoModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.getElementById('userFullName').focus(), 300);
+      return;
+    }
+
+    // We have user info — render the letter with placeholders filled
+    renderLetter(letter);
+  }
+
+  function saveUserInfo() {
+    const name = document.getElementById('userFullName').value.trim();
+    const address = document.getElementById('userAddress').value.trim();
+    const cityStateZip = document.getElementById('userCityStateZip').value.trim();
+
+    if (!name || !address || !cityStateZip) {
+      showToast('Please fill in all fields.', 'warning');
+      return;
+    }
+
+    APP_STATE.userInfo = { name, address, cityStateZip };
+    try { localStorage.setItem('parseur10x_user_info', JSON.stringify(APP_STATE.userInfo)); } catch(e) {}
+
+    // Close info modal
+    document.getElementById('userInfoModal').classList.remove('open');
+
+    // If we have a pending letter, show it now
+    if (APP_STATE.pendingLetterId) {
+      const analysis = APP_STATE.analysis;
+      const letter = (analysis.disputeLetters || []).find(l => l.itemId === APP_STATE.pendingLetterId);
+      APP_STATE.pendingLetterId = null;
+      if (letter) renderLetter(letter);
+      else document.body.style.overflow = '';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
+
+  function renderLetter(letter) {
+    const info = APP_STATE.userInfo;
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Replace all placeholder variants
+    let body = letter.letterBody;
+    if (info) {
+      body = body
+        .replace(/\[YOUR NAME\]/gi, info.name)
+        .replace(/\[YOUR FULL NAME\]/gi, info.name)
+        .replace(/\[YOUR ADDRESS\]/gi, info.address + '\n' + info.cityStateZip)
+        .replace(/\[YOUR STREET ADDRESS\]/gi, info.address)
+        .replace(/\[CITY, STATE ZIP\]/gi, info.cityStateZip)
+        .replace(/\[DATE\]/gi, today)
+        .replace(/\[TODAY'S DATE\]/gi, today)
+        .replace(/\[YOUR SIGNATURE\]/gi, info.name)
+        .replace(/\[YOUR PRINTED NAME\]/gi, info.name)
+        .replace(/\[YOUR PHONE NUMBER\]/gi, '[Phone optional — written correspondence preferred]')
+        .replace(/\[PHONE NUMBER\]/gi, '[Phone optional — written correspondence preferred]');
+    }
+
+    // Remove "Send via Certified Mail" lines from letter body (we show it in UI instead)
+    body = body
+      .replace(/\n*Send via Certified Mail[,.]? ?Return Receipt Requested\.?\n*/gi, '\n')
+      .replace(/\n*Sent via Certified Mail[,.]? ?Return Receipt Requested\.?\n*/gi, '\n')
+      .replace(/\n*Tracking #:?\s*_{0,20}\n*/gi, '\n');
+
     document.getElementById('modalTitle').textContent = letter.letterType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + ' — ' + letter.recipientName;
-    document.getElementById('letterContent').textContent = letter.letterBody;
+    document.getElementById('letterContent').textContent = body;
     document.getElementById('letterModal').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -2203,6 +2343,10 @@
       btn.textContent = '✅ Copied!';
       setTimeout(() => btn.textContent = '📋 Copy to Clipboard', 2000);
     });
+  }
+
+  function printLetter() {
+    window.print();
   }
 
   // ==================== CONFETTI ====================
