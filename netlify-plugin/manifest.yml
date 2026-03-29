@@ -1,0 +1,19 @@
+{
+  "name": "netlify-plugin-ebss-seo-automator",
+  "version": "1.0.0",
+  "description": "Auto-ping IndexNow + Google Indexing API on every Netlify deploy",
+  "main": "index.js",
+  "inputs": [
+    {
+      "name": "siteUrl",
+      "description": "Your site URL (e.g. https://creditfasttrack10x.live). Defaults to Netlify $URL env var.",
+      "required": false
+    },
+    {
+      "name": "sitemapPath",
+      "description": "Path to your sitemap.xml",
+      "default": "/sitemap.xml",
+      "required": false
+    }
+  ]
+}
