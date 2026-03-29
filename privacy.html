@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — PARSEUR 10X</title>
+<meta name="description" content="PARSEUR 10X privacy policy. How we handle your credit report data, personal information, and payments.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://parseur10x.live/privacy">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --surface: #FFFFFF; --border: #E2E5EF; --border-light: #ECEEF5;
+    --text-primary: #1A1D2B; --text-secondary: #5A6078; --text-muted: #8B90A5;
+    --accent: #2563EB; --radius-lg: 20px;
+    --font-display: 'Fraunces', serif; --font-body: 'DM Sans', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font-body); background: var(--bg); color: var(--text-primary); line-height: 1.8; -webkit-font-smoothing: antialiased; }
+  .page-nav { background: var(--surface); border-bottom: 1px solid var(--border-light); padding: 0 24px; height: 56px; display: flex; align-items: center; }
+  .page-nav a { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+  .page-nav span { background: var(--accent); color: white; font-family: var(--font-body); font-size: 0.6rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+  .legal-container { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+  .legal-container h1 { font-family: var(--font-display); font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+  .legal-meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 40px; }
+  .legal-container h2 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin-top: 36px; margin-bottom: 12px; color: var(--text-primary); }
+  .legal-container p { font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.8; }
+  .legal-container strong { color: var(--text-primary); }
+  .legal-footer { max-width: 760px; margin: 0 auto; padding: 24px; border-top: 1px solid var(--border-light); font-size: 0.78rem; color: var(--text-muted); text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="page-nav">
+  <a href="/">🛡️ PARSEUR <span>10X</span></a>
+</div>
+
+<div class="legal-container">
+  <h1>Privacy Policy</h1>
+  <p class="legal-meta">Last updated: March 28, 2026 · Effective immediately</p>
+
+  <p>PARSEUR 10X ("we," "our," "us") is operated by EBSS LLC. This Privacy Policy explains how we collect, use, and protect your information when you use our credit report parsing and dispute letter generation service at parseur10x.live.</p>
+
+  <h2>1. Information We Collect</h2>
+  <p><strong>Email Address:</strong> We collect your email address when you use our free analysis tool (via the email gate) or when you subscribe to our Pro plan. We use this to identify your account, send login links, and communicate important service updates.</p>
+  <p><strong>Credit Report Data:</strong> When you upload a credit report PDF, the text content is extracted in your browser using client-side technology (pdf.js). The extracted text is sent to our analysis service for processing. We do not store your credit report data on our servers. All analysis is performed in real-time, and the report text is discarded immediately after processing.</p>
+  <p><strong>Payment Information:</strong> Payment processing is handled entirely by Stripe, Inc. We never see, store, or have access to your full credit card number, CVV, or banking details. Stripe's privacy policy governs how your payment information is handled.</p>
+  <p><strong>Personal Information for Dispute Letters:</strong> If you choose to enter your name and address for auto-filling dispute letters, this information is stored locally on your device (in your browser's localStorage) and is never transmitted to our servers.</p>
+  <p><strong>Usage Data:</strong> We may collect anonymized usage data including pages visited, features used, and general interaction patterns to improve our service.</p>
+
+  <h2>2. How We Use Your Information</h2>
+  <p>We use your information solely for the following purposes: providing credit report analysis and dispute letter generation, processing your Pro subscription payments, sending magic link login emails to verify your identity, improving our service and user experience, and communicating important service updates or changes.</p>
+
+  <h2>3. Credit Report Data Handling</h2>
+  <p><strong>Your credit report is never stored.</strong> Here is exactly what happens when you upload a report:</p>
+  <p>1. Your PDF is read entirely in your browser — the file never leaves your device. 2. Text is extracted client-side using pdf.js. 3. The extracted text is sent via encrypted connection (TLS/SSL) to our analysis function. 4. Our AI analyzes the text and returns results. 5. The text is immediately discarded — we do not save, cache, or log your credit report content. 6. Results are displayed in your browser and optionally saved in your browser's session storage for convenience.</p>
+
+  <h2>4. Third-Party Services</h2>
+  <p><strong>Stripe:</strong> We use Stripe for payment processing. When you subscribe to Pro, your payment is processed directly by Stripe. See Stripe's privacy policy at stripe.com/privacy.</p>
+  <p><strong>Anthropic (Claude AI):</strong> Credit report text is processed using Anthropic's Claude AI API for analysis. Anthropic's API does not retain input data for training purposes. See Anthropic's privacy policy at anthropic.com/privacy.</p>
+  <p><strong>Affiliate Partners:</strong> Our service includes links to third-party credit building and monitoring services including Kikoff, Ava Credit, and IdentityIQ. If you click these links and sign up, those companies' privacy policies apply. We may earn a commission from these referrals at no additional cost to you. We do not share your personal information with affiliate partners.</p>
+  <p><strong>Netlify:</strong> Our service is hosted on Netlify. Netlify may collect standard server logs including IP addresses. See Netlify's privacy policy at netlify.com/privacy.</p>
+
+  <h2>5. Data Security</h2>
+  <p>We implement industry-standard security measures including TLS/SSL encryption for all data in transit, secure serverless architecture with no persistent data storage, HMAC-signed authentication tokens for login, and Stripe's PCI-compliant payment processing. While no system is 100% secure, we take reasonable measures to protect your information.</p>
+
+  <h2>6. Your Rights</h2>
+  <p>You have the right to access any personal information we hold about you (limited to your email address and subscription status), request deletion of your email from our records, cancel your Pro subscription at any time through Stripe, and clear all locally stored data by clearing your browser's localStorage. To exercise any of these rights, contact us at the email below.</p>
+
+  <h2>7. Cookies and Local Storage</h2>
+  <p>We do not use tracking cookies. We use your browser's localStorage to store your Pro subscription status, email gate completion status, dispute letter personal information (name and address, entered by you), and parse usage limits. You can clear this data at any time through your browser settings.</p>
+
+  <h2>8. Children's Privacy</h2>
+  <p>PARSEUR 10X is not intended for use by individuals under 18 years of age. We do not knowingly collect information from children.</p>
+
+  <h2>9. Changes to This Policy</h2>
+  <p>We may update this Privacy Policy from time to time. We will notify users of material changes by posting the updated policy on this page with a revised "Last updated" date.</p>
+
+  <h2>10. Contact Us</h2>
+  <p>If you have questions about this Privacy Policy or our data practices, contact us at: EBSS LLC — parseur10x.live</p>
+</div>
+
+<div class="legal-footer">
+  © <script>document.write(new Date().getFullYear())</script> PARSEUR 10X · EBSS LLC · <a href="/terms" style="color:var(--accent);text-decoration:none;">Terms of Service</a>
+</div>
+
+</body>
+</html>
