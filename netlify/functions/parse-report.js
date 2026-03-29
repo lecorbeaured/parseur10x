@@ -144,7 +144,7 @@ ${truncated}`;
         return {
           statusCode: 502,
           headers,
-          body: JSON.stringify({ error: 'Failed to parse analysis results. Please try again.', debug: rawText.substring(0, 200), stopReason }),
+          body: JSON.stringify({ error: 'Failed to parse analysis results. Please try again.' }),
         };
       }
     }

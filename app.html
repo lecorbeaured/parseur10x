@@ -109,6 +109,16 @@
     color: var(--text-muted);
   }
   .app-nav-plan.pro { background: var(--pro-gold-light); color: var(--pro-gold); }
+  .login-btn {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .login-btn:hover { color: var(--accent); background: var(--accent-light); }
   .upgrade-btn {
     font-size: 0.82rem;
     font-weight: 600;
@@ -1227,6 +1237,7 @@
   <a href="index.html" class="app-nav-logo">🛡️ PARSEUR <span>10X</span></a>
   <div class="app-nav-right">
     <div class="app-nav-plan" id="planBadge">FREE PLAN</div>
+    <a href="#" class="login-btn" id="loginBtn" onclick="showLoginModal(); return false;">Log In</a>
     <a href="#" class="upgrade-btn" id="upgradeBtn" onclick="showUpgradeModal()">Upgrade to Pro</a>
   </div>
 </div>
@@ -1495,6 +1506,29 @@
   </div>
 </div>
 
+<!-- ==================== LOGIN MODAL ==================== -->
+<div class="email-gate-overlay" id="loginModal">
+  <div class="email-gate-modal">
+    <div class="email-gate-icon">🔑</div>
+    <h2 class="email-gate-title">Pro Login</h2>
+    <p class="email-gate-sub">Enter the email you used to subscribe. We'll send you a login link.</p>
+    <div class="email-gate-field">
+      <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <button class="email-gate-btn" id="loginSubmitBtn" onclick="submitLogin()">Send Login Link →</button>
+    <p class="email-gate-privacy">🔒 Check your inbox for a secure one-click login link.</p>
+    <div id="loginError" class="email-gate-error"></div>
+    <div id="loginSuccess" style="display:none;text-align:center;padding:16px 0;">
+      <div style="font-size:2rem;margin-bottom:8px;">📬</div>
+      <div style="font-family:var(--font-display);font-size:1.05rem;font-weight:700;margin-bottom:4px;">Login Link Sent!</div>
+      <div style="color:var(--text-secondary);font-size:0.85rem;">Check your email and click the link to log in. The link expires in 1 hour.</div>
+    </div>
+    <div style="text-align:center;margin-top:16px;">
+      <a href="#" style="font-size:0.82rem;color:var(--text-muted);text-decoration:none;" onclick="document.getElementById('loginModal').classList.remove('open');document.body.style.overflow='';return false;">Cancel</a>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
@@ -1522,7 +1556,16 @@
     document.getElementById('planBadge').textContent = 'PRO';
     document.getElementById('planBadge').classList.add('pro');
     document.getElementById('upgradeBtn').style.display = 'none';
+    document.getElementById('loginBtn').style.display = 'none';
     try { localStorage.setItem('parseur10x_pro', 'true'); } catch(e) {}
+
+    // Show logged-in email if available
+    try {
+      const email = localStorage.getItem('parseur10x_pro_email');
+      if (email) {
+        document.getElementById('planBadge').textContent = 'PRO · ' + email.split('@')[0];
+      }
+    } catch(e) {}
 
     // If we have analysis data, re-render results with everything unlocked
     if (APP_STATE.analysis && document.getElementById('resultsState').style.display === 'block') {
@@ -1566,7 +1609,10 @@
     document.getElementById('planBadge').textContent = 'FREE PLAN';
     document.getElementById('planBadge').classList.remove('pro');
     document.getElementById('upgradeBtn').style.display = '';
+    document.getElementById('loginBtn').style.display = '';
     try { localStorage.removeItem('parseur10x_pro'); } catch(e) {}
+    try { localStorage.removeItem('parseur10x_pro_email'); } catch(e) {}
+    try { localStorage.removeItem('parseur10x_auth_token'); } catch(e) {}
   }
 
   // Check localStorage for returning pro users
@@ -1691,6 +1737,129 @@
       toast.classList.remove('show');
       setTimeout(() => toast.remove(), 300);
     }, 4000);
+  }
+
+  // ==================== MAGIC LINK AUTH ====================
+  function showLoginModal() {
+    document.getElementById('loginModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    // Reset state
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('loginSuccess').style.display = 'none';
+    document.getElementById('loginSubmitBtn').style.display = '';
+    document.querySelector('#loginModal .email-gate-field').style.display = '';
+    document.querySelector('#loginModal .email-gate-sub').style.display = '';
+    setTimeout(() => document.getElementById('loginEmail').focus(), 300);
+  }
+
+  // Handle Enter key on login input
+  document.addEventListener('DOMContentLoaded', () => {
+    const loginInput = document.getElementById('loginEmail');
+    if (loginInput) {
+      loginInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitLogin();
+      });
+    }
+  });
+
+  async function submitLogin() {
+    const emailInput = document.getElementById('loginEmail');
+    const email = emailInput.value.trim();
+    const errEl = document.getElementById('loginError');
+    const btn = document.getElementById('loginSubmitBtn');
+
+    if (!email) {
+      errEl.textContent = 'Please enter your email.';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errEl.textContent = 'Please enter a valid email.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Checking subscription...';
+
+    try {
+      const res = await fetch('/.netlify/functions/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        errEl.textContent = data.error || 'Something went wrong.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Send Login Link →';
+        return;
+      }
+
+      // Success — show confirmation
+      btn.style.display = 'none';
+      document.querySelector('#loginModal .email-gate-field').style.display = 'none';
+      document.querySelector('#loginModal .email-gate-sub').style.display = 'none';
+      document.getElementById('loginSuccess').style.display = 'block';
+
+      // Auto-close after 5 seconds
+      setTimeout(() => {
+        document.getElementById('loginModal').classList.remove('open');
+        document.body.style.overflow = '';
+      }, 5000);
+
+    } catch (err) {
+      console.error('Login error:', err);
+      errEl.textContent = 'Connection error. Please try again.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Send Login Link →';
+    }
+  }
+
+  // Handle magic link token on page load
+  (function handleMagicLinkToken() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('auth_token');
+    const authEmail = params.get('auth_email');
+
+    if (token && authEmail) {
+      // Verify token with backend
+      verifyMagicLink(token, authEmail);
+      window.history.replaceState({}, '', '/app.html');
+    }
+  })();
+
+  async function verifyMagicLink(token, email) {
+    try {
+      const res = await fetch('/.netlify/functions/verify-magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, email }),
+      });
+
+      const data = await res.json();
+
+      if (data.valid) {
+        try {
+          localStorage.setItem('parseur10x_pro_email', email);
+          localStorage.setItem('parseur10x_auth_token', token);
+        } catch(e) {}
+        activatePro(true);
+        showToast('Welcome back! Logged in as ' + email, 'success');
+        setTimeout(triggerConfetti, 300);
+      } else {
+        showToast(data.error || 'Invalid or expired login link. Please request a new one.', 'warning');
+      }
+    } catch (err) {
+      console.error('Magic link verification error:', err);
+      showToast('Could not verify login. Please try again.', 'error');
+    }
   }
 
   // ==================== EMAIL GATE ====================

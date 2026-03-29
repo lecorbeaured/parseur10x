@@ -34,9 +34,3 @@
   from = "/app"
   to = "/app.html"
   status = 200
-
-[[plugins]]
-  package = "./netlify-plugin"
-
-  [plugins.inputs]
-    sitemapPath = "/sitemap.xml"

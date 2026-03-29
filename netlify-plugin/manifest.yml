@@ -1,9 +1,0 @@
-name: netlify-plugin-ebss-seo-automator
-inputs:
-  - name: siteUrl
-    description: Your site URL. Defaults to Netlify $URL env var.
-    required: false
-  - name: sitemapPath
-    description: Path to your sitemap.xml
-    default: /sitemap.xml
-    required: false
