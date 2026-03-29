@@ -1229,6 +1229,19 @@
     .pro-banner { flex-direction: column; text-align: center; }
   }
 </style>
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FZRF7B4KP3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-FZRF7B4KP3");
+
+  // Custom event helpers
+  function trackEvent(name, params) {
+    try { gtag('event', name, params || {}); } catch(e) {}
+  }
+</script>
 </head>
 <body>
 
@@ -1391,7 +1404,7 @@
             <div class="aw-content">
               <h4>Kikoff Credit Builder</h4>
               <p>Build credit history with $0/mo. No hard pull, reports to all 3 bureaus.</p>
-              <a href="https://kikoff.pxf.io/c/7007975/2344833/14994" target="_blank" rel="noopener sponsored" class="aw-link">Start free →</a>
+              <a href="https://kikoff.pxf.io/c/7007975/2344833/14994" target="_blank" rel="noopener sponsored" class="aw-link" onclick="trackEvent('affiliate_click',{partner:'kikoff',location:'sidebar'})">Start free →</a>
               <img height="0" width="0" src="https://imp.pxf.io/i/7007975/2344833/14994" style="position:absolute;visibility:hidden;" border="0" />
             </div>
           </div>
@@ -1404,7 +1417,7 @@
             <div class="aw-content">
               <h4>Ava Credit Card</h4>
               <p>AI-powered card for rebuilders. No deposit, no hard pull.</p>
-              <a href="https://meetava.sjv.io/KB0xLA" target="_blank" rel="noopener sponsored" class="aw-link">Check eligibility →</a>
+              <a href="https://meetava.sjv.io/KB0xLA" target="_blank" rel="noopener sponsored" class="aw-link" onclick="trackEvent('affiliate_click',{partner:'ava',location:'sidebar'})">Check eligibility →</a>
             </div>
           </div>
         </div>
@@ -1416,7 +1429,7 @@
             <div class="aw-content">
               <h4>IdentityIQ Monitoring</h4>
               <p>Real-time score tracking + dispute result alerts across all 3 bureaus.</p>
-              <a href="https://www.identityiq.com/sc-securemax.aspx?offercode=431297RY" target="_blank" rel="noopener sponsored" class="aw-link">Start monitoring →</a>
+              <a href="https://www.identityiq.com/sc-securemax.aspx?offercode=431297RY" target="_blank" rel="noopener sponsored" class="aw-link" onclick="trackEvent('affiliate_click',{partner:'identityiq',location:'sidebar'})">Start monitoring →</a>
             </div>
           </div>
         </div>
@@ -1558,6 +1571,7 @@
     document.getElementById('upgradeBtn').style.display = 'none';
     document.getElementById('loginBtn').style.display = 'none';
     try { localStorage.setItem('parseur10x_pro', 'true'); } catch(e) {}
+    trackEvent('pro_activated', { method: showUnlockAnimation ? 'checkout' : 'returning' });
 
     // Show logged-in email if available
     try {
@@ -1688,6 +1702,7 @@
 
   // ==================== STRIPE CHECKOUT ====================
   function showUpgradeModal() {
+    trackEvent('upgrade_click', { source: 'app' });
     handleStripeCheckout();
   }
 
@@ -1910,6 +1925,7 @@
 
     // Store email locally
     APP_STATE.emailCaptured = true;
+    trackEvent('email_captured', { source: 'email_gate' });
     try { localStorage.setItem('parseur10x_email', email); } catch(e) {}
 
     // Send to backend (non-blocking — don't wait for response)
@@ -1977,6 +1993,7 @@
     }
 
     APP_STATE.fileName = file.name;
+    trackEvent('report_upload', { file_size: file.size, is_pro: APP_STATE.isPro });
     startProcessing(file);
   }
 
@@ -2092,6 +2109,7 @@
 
     const data = await res.json();
     console.log('Analysis result:', data);
+    trackEvent('analysis_complete', { negative_items: (data.negativeItems || []).length, score: data.creditHealthScore });
     return data;
   }
 
@@ -2272,7 +2290,7 @@
                 <div class="aff-cta-badge">${rec.affiliateHook === 'kikoff' ? '🏗️ Recommended' : rec.affiliateHook === 'ava' ? '💳 Recommended' : '🔍 Recommended'}</div>
                 <div class="aff-cta-text">${aff.label.replace(' →', '')}</div>
               </div>
-              <a href="${aff.url}" target="_blank" rel="noopener sponsored" class="aff-cta-btn">Get Started →</a>
+              <a href="${aff.url}" target="_blank" rel="noopener sponsored" class="aff-cta-btn" onclick="trackEvent('affiliate_click', {partner:'${rec.affiliateHook}',location:'recommendation'})">Get Started →</a>
               ${aff.pixel ? `<img height="0" width="0" src="${aff.pixel}" style="position:absolute;visibility:hidden;" border="0" />` : ''}
             </div>
           `;
@@ -2468,6 +2486,7 @@
   }
 
   function renderLetter(letter) {
+    trackEvent('dispute_letter_generated', { letter_type: letter.letterType, recipient: letter.recipientName });
     const info = APP_STATE.userInfo;
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
