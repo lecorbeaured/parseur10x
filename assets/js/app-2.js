@@ -625,6 +625,7 @@
 
   // ==================== RENDER RESULTS ====================
   function showResults(data) {
+    document.getElementById('uploadState').style.display = 'none';
     document.getElementById('processingState').style.display = 'none';
     document.getElementById('resultsState').style.display = 'block';
 
