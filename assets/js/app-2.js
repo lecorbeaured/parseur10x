@@ -733,7 +733,7 @@ Analysis rules:
 - Give the user a clear first next step, not just a list of problems.
 
 Credit report text:
-` + trimmed;
+`;
 
     // Call DeepSeek for each chunk and merge results
     async function callDeepSeek(chunkText, chunkIndex, totalChunks) {
