@@ -597,33 +597,181 @@
 
   // ==================== CLAUDE API ANALYSIS ====================
   async function analyzeReport(reportText) {
-    // Truncate client-side — 20k chars is enough for most credit reports
-    // Sample from beginning, middle, and end to catch all negative items
-    const len = reportText.length;
-    const chunk = 3000;
-    const beginning = reportText.substring(0, chunk);
-    const middle = reportText.substring(Math.floor(len / 2) - 1000, Math.floor(len / 2) + 2000);
-    const end = reportText.substring(Math.max(0, len - 2000));
-    const trimmed = (beginning + '\n\n[...middle section...]\n\n' + middle + '\n\n[...end section...]\n\n' + end).substring(0, 10000);
-    console.log('Sending report text:', trimmed.length, 'chars');
+    const DEEPSEEK_KEY = 'sk-05fc91e2756a46e48757b136626502c8';
 
-    const res = await fetch('/.netlify/functions/parse-report', {
+    // Sample beginning, middle, and end to cover full report
+    const len = reportText.length;
+    const beginning = reportText.substring(0, 4000);
+    const middle = reportText.substring(Math.floor(len / 2) - 1500, Math.floor(len / 2) + 2500);
+    const end = reportText.substring(Math.max(0, len - 3000));
+    const trimmed = (beginning + '\n\n[...middle section...]\n\n' + middle + '\n\n[...end section...]\n\n' + end).substring(0, 12000);
+    console.log('Sending report text:', trimmed.length, 'chars, full PDF length:', len);
+
+    const prompt = `You are PARSEUR 10X, a careful credit report analysis assistant for consumers.
+Return ONLY valid JSON. Do not use markdown, comments, or backticks.
+
+Primary goal:
+- Help the user understand possible credit report issues.
+- Identify items that may be inaccurate, incomplete, unverifiable, outdated, duplicated, or worth reviewing.
+- Recommend practical next steps without claiming guaranteed deletion or guaranteed score increases.
+- Do not encourage false disputes. If an item appears accurate, recommend goodwill, payment strategy, utilization reduction, or monitoring instead.
+
+Required JSON shape:
+{
+  "summary": {
+    "totalAccounts": 0,
+    "openAccounts": 0,
+    "closedAccounts": 0,
+    "totalBalance": "$0",
+    "hardInquiries": 0,
+    "creditScore": null,
+    "creditScoreLabel": "",
+    "oldestAccountAge": "",
+    "utilizationRate": "",
+    "reportBureausFound": []
+  },
+  "negativeItems": [
+    {
+      "id": "neg1",
+      "creditor": "",
+      "type": "collection|late_payment|charge_off|repossession|bankruptcy|inquiry|high_utilization|personal_info|other",
+      "bureau": "Experian|Equifax|TransUnion|Multiple|Unknown",
+      "accountNumberLast4": "",
+      "details": "",
+      "whyItMatters": "",
+      "possibleIssues": [],
+      "impact": "high|medium|low",
+      "impactScore": 0,
+      "fixStrategy": "dispute|debt_validation|goodwill|pay-for-delete|pay-down|wait|monitor",
+      "fixExplanation": "",
+      "nextStep": "",
+      "timeline": "",
+      "strategyExplainer": {
+        "whatItIs": "",
+        "howToUse": "",
+        "proTip": ""
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "title": "",
+      "description": "",
+      "whyThisComesFirst": "",
+      "estimatedGain": "",
+      "affiliateHook": "kikoff|ava|identityiq|none",
+      "strategyExplainer": {
+        "whatItIs": "",
+        "howToUse": "",
+        "proTip": ""
+      }
+    }
+  ],
+  "disputeLetters": [
+    {
+      "itemId": "neg1",
+      "letterType": "debt_validation|goodwill|pay_for_delete|dispute_inaccuracy|method_of_verification",
+      "recipientName": "",
+      "recipientAddress": "",
+      "letterBody": ""
+    }
+  ],
+  "actionPlan": [
+    { "step": 1, "title": "", "description": "", "timing": "" }
+  ],
+  "creditHealthScore": 0,
+  "rank": "Credit Rookie|Credit Builder|Credit Warrior|Credit Champion|Credit Master",
+  "confidence": "high|medium|low",
+  "reviewWarnings": []
+}
+
+Analysis rules:
+- IMPORTANT: The report text below may be sampled from multiple sections of a longer document. Only flag items where the negative status is explicitly and clearly stated in the text you can see. Do not infer or assume negative status from partial data.
+- Prioritize exact items found in the report text. Do not invent creditors, balances, bureaus, dates, or addresses.
+- Only mark an account as a charge-off if the text explicitly says "charged off", "charge-off", or "charge off".
+- Only mark an account as a collection if the text explicitly shows a collection agency or collection status.
+- Only mark an account as a late payment if the text explicitly shows a late payment notation (30, 60, 90 days late).
+- Flag ALL negative items you can find — do not stop at 1 or 2. Return every negative item visible in the text.
+- Collections usually start with debt validation when ownership, balance, dates, or collector authority are unclear.
+- Late payments usually start with goodwill unless there is a clear reporting inconsistency.
+- Charge-offs may need factual dispute, goodwill, settlement strategy, or pay-for-delete depending on the details.
+- High utilization should use pay-down strategy, not a dispute strategy.
+- Hard inquiries should only be disputed if they look unfamiliar or unauthorized.
+- Include personal information issues when names, addresses, employers, or phone numbers appear outdated or inconsistent.
+- Letters must sound personal, firm, and natural. Avoid robotic template language.
+- Keep letters under 250 words each.
+- Do not use phrases like "pursuant to my rights" or "I dispute the validity."
+- Affiliate hook guide: kikoff=positive tradeline/credit builder, ava=credit builder/payment history, identityiq=monitoring, none=not relevant.
+- Credit health score should be 0-100. Rank mapping: 0-30 Rookie, 31-50 Builder, 51-70 Warrior, 71-85 Champion, 86-100 Master.
+- Give the user a clear first next step, not just a list of problems.
+
+Credit report text:
+` + trimmed;
+
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reportText: trimmed }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + DEEPSEEK_KEY,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        max_tokens: 4000,
+        temperature: 0.1,
+        messages: [{ role: 'user', content: prompt }],
+      }),
     });
 
-    console.log('Function response status:', res.status);
+    console.log('DeepSeek response status:', res.status);
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error('Function error response:', errText);
-      let errMsg = 'Analysis failed. Please try again.';
-      try { errMsg = JSON.parse(errText).error || errMsg; } catch(e) {}
-      throw new Error(errMsg);
+      console.error('DeepSeek error:', errText);
+      throw new Error('Analysis failed. Please try again.');
     }
 
-    const data = await res.json();
+    const raw = await res.json();
+    const content = raw.choices?.[0]?.message?.content || '';
+    console.log('DeepSeek raw response length:', content.length);
+
+    // Parse JSON from response
+    let data;
+    try {
+      const cleaned = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      data = JSON.parse(cleaned);
+    } catch(e) {
+      // Try to extract JSON object
+      const match = content.match(/\{[\s\S]*\}/);
+      if (match) {
+        try { data = JSON.parse(match[0]); } catch(e2) {
+          throw new Error('Could not parse analysis response. Please try again.');
+        }
+      } else {
+        throw new Error('Invalid analysis response. Please try again.');
+      }
+    }
+
+    // Normalize fields to match existing render logic
+    if (data.negativeItems) {
+      data.negativeItems = data.negativeItems.map((item, i) => ({
+        ...item,
+        id: item.id || 'neg_' + (i + 1),
+        account: item.creditor || item.account || 'Unknown Account',
+        issueType: item.type || item.issueType || 'other',
+        impactLevel: item.impact || item.impactLevel || 'medium',
+        description: item.details || item.description || '',
+      }));
+    }
+
+    if (data.disputeLetters) {
+      data.disputeLetters = data.disputeLetters.map(letter => ({
+        ...letter,
+        itemId: letter.itemId || 'neg_1',
+        letterType: letter.letterType || 'standard',
+      }));
+    }
+
     console.log('Analysis result:', data);
     trackEvent('analysis_complete', { negative_items: (data.negativeItems || []).length, score: data.creditHealthScore });
     return data;
