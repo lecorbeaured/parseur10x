@@ -276,7 +276,7 @@ if (window.renderDisputeTracker) {
     renderCreditRoadmap(event.detail || {});
   });
 
-  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  if (true) {
     document.addEventListener('DOMContentLoaded', function () {
       if (document.querySelector('#roadmap-test-button')) return;
 
