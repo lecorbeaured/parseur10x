@@ -814,7 +814,7 @@ Credit report text:
     data.negativeItems = data.negativeItems.map((item, i) => ({
       ...item,
       id: item.id || 'neg_' + (i + 1),
-      account: item.creditor || item.account || 'Unknown Account',
+      account: (item.creditor || item.account || 'Unknown Account').replace(/\s*-\s*(Closed|Open|Collection)$/i, '').trim(),
       issueType: item.type || item.issueType || 'other',
       impactLevel: item.impact || item.impactLevel || 'medium',
       description: item.details || item.description || '',
