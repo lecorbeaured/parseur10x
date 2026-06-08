@@ -719,6 +719,7 @@ Analysis rules:
 - Only mark an account as a collection if the text explicitly shows a collection agency or collection status.
 - Only mark an account as a late payment if the text explicitly shows a late payment notation (30, 60, 90 days late).
 - Flag ALL negative items you can find — do not stop at 1 or 2. Return every negative item visible in the text.
+- ONLY flag an account as negative if it explicitly shows: Status: Charge Off, Loan/Account Type: Debt Buyer, Amount Past Due with a dollar amount, or Collection Account status. Do NOT flag accounts that show "Pays As Agreed" or have no delinquency markers.
 - Collections usually start with debt validation when ownership, balance, dates, or collector authority are unclear.
 - Late payments usually start with goodwill unless there is a clear reporting inconsistency.
 - Charge-offs may need factual dispute, goodwill, settlement strategy, or pay-for-delete depending on the details.
@@ -809,6 +810,27 @@ Credit report text:
 
     data.negativeItems = allNegativeItems;
     data.disputeLetters = allDisputeLetters;
+
+    // Filter out accounts that are clearly not negative (paid as agreed, no delinquency markers)
+    const falsePositivePatterns = [
+      /kohl/i, /department store/i, /grow credit/i, /self financial/i,
+      /kikoff/i, /cherry llc/i, /sbnaslfldr/i
+    ];
+
+    data.negativeItems = data.negativeItems.filter(item => {
+      const name = (item.creditor || item.account || '').toLowerCase();
+      // Keep if explicitly charge off, collection, or debt buyer
+      const isDefinitelyNegative = (
+        (item.type || '').includes('charge_off') ||
+        (item.type || '').includes('collection') ||
+        (item.fixStrategy || '') === 'debt_validation' ||
+        (item.details || '').toLowerCase().includes('charge off') ||
+        (item.details || '').toLowerCase().includes('collection') ||
+        (item.details || '').toLowerCase().includes('debt buyer') ||
+        (item.details || '').toLowerCase().includes('past due')
+      );
+      return isDefinitelyNegative;
+    });
 
     // Normalize fields
     data.negativeItems = data.negativeItems.map((item, i) => ({
