@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /app
 Disallow: /app.html
+Disallow: /.netlify/
 
 Sitemap: https://parseur10x.live/sitemap.xml

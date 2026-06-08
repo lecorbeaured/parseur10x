@@ -9,19 +9,103 @@
 
 exports.config = { maxDuration: 26 };
 
-const PROMPT_PREFIX = `You are a consumer credit advocate. ALWAYS side with the user, NEVER with bureaus or furnishers. Find every angle to dispute/remove negatives. Return ONLY valid JSON, no markdown or backticks.
+const PROMPT_PREFIX = `You are PARSEUR 10X, a careful credit report analysis assistant for consumers.
+Return ONLY valid JSON. Do not use markdown, comments, or backticks.
 
-{"summary":{"totalAccounts":0,"openAccounts":0,"closedAccounts":0,"totalBalance":"$0","hardInquiries":0,"creditScore":null,"creditScoreLabel":""},"negativeItems":[{"id":"neg1","creditor":"","type":"","details":"","impact":"high|medium|low","impactScore":0,"fixStrategy":"dispute|goodwill|pay-for-delete|pay-down|wait","fixExplanation":"","strategyExplainer":{"whatItIs":"","howToUse":"","proTip":""}}],"recommendations":[{"priority":1,"title":"","description":"","estimatedGain":"","affiliateHook":"kikoff|ava|identityiq|none","strategyExplainer":{"whatItIs":"","howToUse":"","proTip":""}}],"disputeLetters":[{"itemId":"neg1","letterType":"debt_validation|goodwill|pay_for_delete|dispute_inaccuracy","recipientName":"","recipientAddress":"","letterBody":""}],"creditHealthScore":0,"rank":"Credit Rookie|Credit Builder|Credit Warrior|Credit Champion|Credit Master"}
+Primary goal:
+- Help the user understand possible credit report issues.
+- Identify items that may be inaccurate, incomplete, unverifiable, outdated, duplicated, or worth reviewing.
+- Recommend practical next steps without claiming guaranteed deletion or guaranteed score increases.
+- Do not encourage false disputes. If an item appears accurate, recommend goodwill, payment strategy, utilization reduction, or monitoring instead.
 
-Rules:
-- Challenge every negative. Collections=debt validation first. Late payments=goodwill. Pay-for-delete=start at 20-30%, demand written deletion BEFORE paying.
-- Letters must sound personal/unique, NOT template. Vary structure, reference specific account details. No phrases like "pursuant to my rights" or "I dispute the validity". Use conversational firm tone.
-- Mail-only for DISPUTES only. Existing payment relationships are user's choice.
-- Affiliates: kikoff=tradelines, ava=credit builder, identityiq=monitoring.
-- Score: 0-300=Rookie,301-500=Builder,501-700=Warrior,701-850=Champion,851-1000=Master.
-- Keep letters under 250 words each. Keep all text concise.
+Required JSON shape:
+{
+  "summary": {
+    "totalAccounts": 0,
+    "openAccounts": 0,
+    "closedAccounts": 0,
+    "totalBalance": "$0",
+    "hardInquiries": 0,
+    "creditScore": null,
+    "creditScoreLabel": "",
+    "oldestAccountAge": "",
+    "utilizationRate": "",
+    "reportBureausFound": []
+  },
+  "negativeItems": [
+    {
+      "id": "neg1",
+      "creditor": "",
+      "type": "collection|late_payment|charge_off|repossession|bankruptcy|inquiry|high_utilization|personal_info|other",
+      "bureau": "Experian|Equifax|TransUnion|Multiple|Unknown",
+      "accountNumberLast4": "",
+      "details": "",
+      "whyItMatters": "",
+      "possibleIssues": [],
+      "impact": "high|medium|low",
+      "impactScore": 0,
+      "fixStrategy": "dispute|debt_validation|goodwill|pay-for-delete|pay-down|wait|monitor",
+      "fixExplanation": "",
+      "nextStep": "",
+      "timeline": "",
+      "strategyExplainer": {
+        "whatItIs": "",
+        "howToUse": "",
+        "proTip": ""
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "title": "",
+      "description": "",
+      "whyThisComesFirst": "",
+      "estimatedGain": "",
+      "affiliateHook": "kikoff|ava|identityiq|none",
+      "strategyExplainer": {
+        "whatItIs": "",
+        "howToUse": "",
+        "proTip": ""
+      }
+    }
+  ],
+  "disputeLetters": [
+    {
+      "itemId": "neg1",
+      "letterType": "debt_validation|goodwill|pay_for_delete|dispute_inaccuracy|method_of_verification",
+      "recipientName": "",
+      "recipientAddress": "",
+      "letterBody": ""
+    }
+  ],
+  "actionPlan": [
+    { "step": 1, "title": "", "description": "", "timing": "" }
+  ],
+  "creditHealthScore": 0,
+  "rank": "Credit Rookie|Credit Builder|Credit Warrior|Credit Champion|Credit Master",
+  "confidence": "high|medium|low",
+  "reviewWarnings": []
+}
 
-Credit report:
+Analysis rules:
+- Prioritize exact items found in the report text. Do not invent creditors, balances, bureaus, dates, or addresses.
+- If a value is not visible, use an empty string, null, [], or "Unknown".
+- Collections usually start with debt validation when ownership, balance, dates, or collector authority are unclear.
+- Late payments usually start with goodwill unless there is a clear reporting inconsistency.
+- Charge-offs may need factual dispute, goodwill, settlement strategy, or pay-for-delete depending on the details.
+- High utilization should use pay-down strategy, not a dispute strategy.
+- Hard inquiries should only be disputed if they look unfamiliar or unauthorized.
+- Include personal information issues when names, addresses, employers, or phone numbers appear outdated or inconsistent.
+- Letters must sound personal, firm, and natural. Avoid robotic template language.
+- Keep letters under 250 words each.
+- Do not use phrases like "pursuant to my rights" or "I dispute the validity."
+- For dispute-style letters, recommend certified mail in the explanation or pro tip.
+- Affiliate hook guide: kikoff=positive tradeline/credit builder, ava=credit builder/payment history, identityiq=monitoring, none=not relevant.
+- Credit health score should be 0-1000. Rank mapping: 0-300 Rookie, 301-500 Builder, 501-700 Warrior, 701-850 Champion, 851-1000 Master.
+- Give the user a clear first next step, not just a list of problems.
+
+Credit report text:
 `;
 
 // ==================== MODEL DEFINITIONS ====================
@@ -121,9 +205,70 @@ function parseResponse(rawText) {
   }
 }
 
+// ==================== OUTPUT NORMALIZER ====================
+function normalizeAnalysis(data) {
+  const safe = data && typeof data === 'object' ? data : {};
+
+  safe.summary = safe.summary && typeof safe.summary === 'object' ? safe.summary : {};
+  safe.negativeItems = Array.isArray(safe.negativeItems) ? safe.negativeItems : [];
+  safe.recommendations = Array.isArray(safe.recommendations) ? safe.recommendations : [];
+  safe.disputeLetters = Array.isArray(safe.disputeLetters) ? safe.disputeLetters : [];
+  safe.actionPlan = Array.isArray(safe.actionPlan) ? safe.actionPlan : [];
+  safe.reviewWarnings = Array.isArray(safe.reviewWarnings) ? safe.reviewWarnings : [];
+
+  const allowedImpacts = new Set(['high', 'medium', 'low']);
+  const allowedStrategies = new Set(['dispute', 'debt_validation', 'goodwill', 'pay-for-delete', 'pay-down', 'wait', 'monitor']);
+
+  safe.negativeItems = safe.negativeItems.map((item, index) => {
+    const next = item && typeof item === 'object' ? item : {};
+    next.id = next.id || `neg${index + 1}`;
+    next.creditor = next.creditor || 'Unknown creditor';
+    next.type = next.type || 'other';
+    next.details = next.details || 'Review this item for possible reporting issues.';
+    next.impact = allowedImpacts.has(next.impact) ? next.impact : 'medium';
+    next.impactScore = Number.isFinite(Number(next.impactScore)) ? Number(next.impactScore) : 0;
+    next.fixStrategy = allowedStrategies.has(next.fixStrategy) ? next.fixStrategy : 'monitor';
+    next.fixExplanation = next.fixExplanation || 'Review the account details before taking action.';
+    next.strategyExplainer = next.strategyExplainer && typeof next.strategyExplainer === 'object'
+      ? next.strategyExplainer
+      : { whatItIs: '', howToUse: '', proTip: '' };
+    next.possibleIssues = Array.isArray(next.possibleIssues) ? next.possibleIssues : [];
+    return next;
+  });
+
+  safe.recommendations = safe.recommendations.map((rec, index) => {
+    const next = rec && typeof rec === 'object' ? rec : {};
+    next.priority = Number.isFinite(Number(next.priority)) ? Number(next.priority) : index + 1;
+    next.title = next.title || 'Review your credit report details';
+    next.description = next.description || 'Check this item carefully before deciding the best next step.';
+    next.affiliateHook = ['kikoff', 'ava', 'identityiq', 'none'].includes(next.affiliateHook) ? next.affiliateHook : 'none';
+    next.strategyExplainer = next.strategyExplainer && typeof next.strategyExplainer === 'object'
+      ? next.strategyExplainer
+      : { whatItIs: '', howToUse: '', proTip: '' };
+    return next;
+  });
+
+  const score = Number(safe.creditHealthScore);
+  safe.creditHealthScore = Number.isFinite(score) ? Math.max(0, Math.min(1000, score)) : 0;
+  safe.rank = safe.rank || getRankFromScore(safe.creditHealthScore);
+  safe.confidence = ['high', 'medium', 'low'].includes(safe.confidence) ? safe.confidence : 'medium';
+
+  return safe;
+}
+
+function getRankFromScore(score) {
+  if (score <= 300) return 'Credit Rookie';
+  if (score <= 500) return 'Credit Builder';
+  if (score <= 700) return 'Credit Warrior';
+  if (score <= 850) return 'Credit Champion';
+  return 'Credit Master';
+}
+
 // ==================== HANDLER ====================
 exports.handler = async (event) => {
-  const headers = {
+  const { rateLimit, rateLimitResponse } = require('./rate-limit');
+
+const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -136,14 +281,25 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
+
+  const limit = rateLimit(event, { name: 'parse_report', max: 5, windowMs: 60 * 1000 });
+  if (limit.limited) {
+    return rateLimitResponse(headers, limit);
+  }
   try {
     const { reportText } = JSON.parse(event.body || '{}');
     if (!reportText || reportText.length < 100) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid or empty report text.' }) };
     }
 
-    const truncated = reportText.substring(0, 8000);
-    const prompt = PROMPT_PREFIX + truncated;
+    const maxReportChars = Number(process.env.MAX_REPORT_CHARS || 12000);
+    const truncated = reportText.substring(0, maxReportChars);
+    const truncationNote = reportText.length > maxReportChars
+      ? `
+
+[System note: The original report was ${reportText.length} characters. Only the first ${maxReportChars} characters were analyzed in this pass.]`
+      : '';
+    const prompt = PROMPT_PREFIX + truncated + truncationNote;
 
     // Try each model in order
     let lastError = '';
@@ -159,8 +315,8 @@ exports.handler = async (event) => {
         const rawText = await model.call(prompt, apiKey);
         console.log(`${model.name} responded: ${rawText.length} chars`);
 
-        const parsed = parseResponse(rawText);
-        console.log(`${model.name} SUCCESS — items: ${(parsed.negativeItems || []).length}`);
+        const parsed = normalizeAnalysis(parseResponse(rawText));
+        console.log(`${model.name} SUCCESS - items: ${(parsed.negativeItems || []).length}`);
 
         return {
           statusCode: 200,

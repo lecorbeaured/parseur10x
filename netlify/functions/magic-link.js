@@ -8,6 +8,7 @@
 //   MAGIC_LINK_SECRET = any-random-string-for-signing (add this to Netlify env vars)
 
 const crypto = require('crypto');
+const { rateLimit, rateLimitResponse } = require('./rate-limit');
 
 exports.handler = async (event) => {
   const headers = {
@@ -24,7 +25,13 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  if (!process.env.STRIPE_SECRET_KEY) {
+
+  const limit = rateLimit(event, { name: 'magic_link', max: 5, windowMs: 60 * 1000 });
+  if (limit.limited) {
+    return rateLimitResponse(headers, limit);
+  }
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.MAGIC_LINK_SECRET) {
+    console.error('Magic link service missing required environment variables.');
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'Service not configured' }) };
   }
 
@@ -69,7 +76,7 @@ exports.handler = async (event) => {
     }
 
     // Generate magic link token
-    const secret = process.env.MAGIC_LINK_SECRET || 'parseur10x-default-secret';
+    const secret = process.env.MAGIC_LINK_SECRET;
     const expiry = Date.now() + (60 * 60 * 1000); // 1 hour
     const payload = email.toLowerCase() + ':' + expiry;
     const token = crypto.createHmac('sha256', secret).update(payload).digest('hex') + ':' + expiry;

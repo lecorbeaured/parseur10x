@@ -49,3 +49,38 @@
   from = "/blog/:slug"
   to = "/blog/:slug.html"
   status = 200
+
+[[redirects]]
+  from = "/free-credit-report-parser"
+  to = "/free-credit-report-parser.html"
+  status = 200
+
+[[redirects]]
+  from = "/credit-dispute-letter-generator"
+  to = "/credit-dispute-letter-generator.html"
+  status = 200
+
+[[redirects]]
+  from = "/remove-late-payments"
+  to = "/remove-late-payments.html"
+  status = 200
+
+[[redirects]]
+  from = "/remove-collections"
+  to = "/remove-collections.html"
+  status = 200
+
+[[redirects]]
+  from = "/609-dispute-letter"
+  to = "/609-dispute-letter.html"
+  status = 200
+
+[[redirects]]
+  from = "/credit-inquiry-removal"
+  to = "/credit-inquiry-removal.html"
+  status = 200
+
+[[redirects]]
+  from = "/credit-cleanup-checklist"
+  to = "/credit-cleanup-checklist.html"
+  status = 200

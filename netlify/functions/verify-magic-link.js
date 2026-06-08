@@ -5,6 +5,7 @@
 //   MAGIC_LINK_SECRET = same secret used in magic-link.js
 
 const crypto = require('crypto');
+const { rateLimit, rateLimitResponse } = require('./rate-limit');
 
 exports.handler = async (event) => {
   const headers = {
@@ -19,6 +20,16 @@ exports.handler = async (event) => {
 
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
+
+  const limit = rateLimit(event, { name: 'verify_magic_link', max: 20, windowMs: 60 * 1000 });
+  if (limit.limited) {
+    return rateLimitResponse(headers, limit);
+  }
+  if (!process.env.MAGIC_LINK_SECRET) {
+    console.error('Magic link verification missing MAGIC_LINK_SECRET.');
+    return { statusCode: 500, headers, body: JSON.stringify({ valid: false, error: 'Service not configured' }) };
   }
 
   try {
@@ -47,7 +58,7 @@ exports.handler = async (event) => {
     }
 
     // Verify hash
-    const secret = process.env.MAGIC_LINK_SECRET || 'parseur10x-default-secret';
+    const secret = process.env.MAGIC_LINK_SECRET;
     const payload = email.toLowerCase() + ':' + expiryStr;
     const expectedHash = crypto.createHmac('sha256', secret).update(payload).digest('hex');
 
