@@ -89,7 +89,10 @@ Required JSON shape:
 }
 
 Analysis rules:
+- IMPORTANT: The report text below may be sampled from multiple sections of a longer document. Only flag items where the negative status is explicitly and clearly stated in the text you can see. Do not infer or assume negative status from partial data.
 - Prioritize exact items found in the report text. Do not invent creditors, balances, bureaus, dates, or addresses.
+- Only mark an account as a charge-off if the text explicitly says "charged off", "charge-off", or "charge off". Do not infer it from balance amounts or account status alone.
+- Only mark an account as a collection if the text explicitly shows a collection agency or collection status.
 - If a value is not visible, use an empty string, null, [], or "Unknown".
 - Collections usually start with debt validation when ownership, balance, dates, or collector authority are unclear.
 - Late payments usually start with goodwill unless there is a clear reporting inconsistency.
