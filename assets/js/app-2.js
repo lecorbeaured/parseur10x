@@ -953,9 +953,14 @@
     }
 
     if (!APP_STATE.isPro) {
-      showUpgradeModal();
-      showToast('Dispute letters are a Pro feature. Upgrade to unlock.', 'info');
-      return;
+      const freeLetterUsed = localStorage.getItem('parseur10x_free_letter_used') === 'true';
+      if (freeLetterUsed) {
+        showUpgradeModal();
+        showToast("You've used your free letter. Upgrade for unlimited dispute letters.", 'info');
+        return;
+      }
+      localStorage.setItem('parseur10x_free_letter_used', 'true');
+      showToast('First dispute letter is on us! Upgrade for unlimited letters.', 'success');
     }
 
     // Check if we have user info, if not ask for it first
