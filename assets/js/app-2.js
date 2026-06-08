@@ -776,7 +776,7 @@ Credit report text:
     console.log('Processing', chunksToProcess.length, 'chunks...');
 
     // Process all chunks in parallel (faster) but cap at 6 chunks to avoid rate limits
-    const maxChunks = Math.min(chunksToProcess.length, 6);
+    const maxChunks = chunksToProcess.length;
     const chunkResults = await Promise.all(
       chunksToProcess.slice(0, maxChunks).map((chunk, i) => callDeepSeek(chunk, i, maxChunks))
     );
