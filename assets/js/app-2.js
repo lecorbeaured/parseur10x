@@ -602,30 +602,36 @@
     const len = reportText.length;
     console.log('Full PDF text length:', len, 'chars');
 
-    const negativeKeywords = [
-      'charge off','charge-off','charged off','collection','debt buyer',
-      'past due','delinquent','delinquency','repossession','bankruptcy',
-      '30 days','60 days','90 days','120 days','150 days','180 days',
-      'amount past due','narrative code'
+    // Split by Equifax page header pattern (works with browser pdf.js extraction)
+    const trueNegativeKeywords = [
+      'status: charge off', 'loan/account type: debt buyer',
+      'amount past due: $', 'date of 1st delinquency', 'date major delinquency',
+      'status: collection'
     ];
 
-    const header = reportText.substring(0, 2000);
-    const pages = reportText.split(/\f/);
-    const negativeBlocks = [];
-
-    for (const page of pages) {
+    const header = reportText.substring(0, 1500);
+    const pages = reportText.split(/Prepared for:/);
+    const negativePages = pages.filter(page => {
       const lower = page.toLowerCase();
-      if (negativeKeywords.some(kw => lower.includes(kw))) {
-        negativeBlocks.push(page.trim());
+      return trueNegativeKeywords.some(kw => lower.includes(kw));
+    });
+
+    console.log('Negative pages found:', negativePages.length, 'of', pages.length);
+
+    // Group negative pages into chunks of ~12000 chars each
+    const chunks = [];
+    let current = '';
+    for (const page of negativePages) {
+      if (current.length + page.length > 12000) {
+        if (current) chunks.push(current);
+        current = page;
+      } else {
+        current += '\n\n---\n\n' + page;
       }
     }
+    if (current) chunks.push(current);
 
-    console.log('Negative pages:', negativeBlocks.length, 'of', pages.length);
-
-    let trimmed = header + '\n\n[NEGATIVE ACCOUNT SECTIONS]\n\n' + negativeBlocks.join('\n\n---\n\n');
-    if (trimmed.length > 14000) trimmed = trimmed.substring(0, 14000);
-
-    console.log('Sending to DeepSeek:', trimmed.length, 'chars');
+    console.log('Chunks to analyze:', chunks.length);
 
     const prompt = `You are PARSEUR 10X, a careful credit report analysis assistant for consumers.
 Return ONLY valid JSON. Do not use markdown, comments, or backticks.
@@ -729,71 +735,100 @@ Analysis rules:
 Credit report text:
 ` + trimmed;
 
-    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + DEEPSEEK_KEY,
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        max_tokens: 4000,
-        temperature: 0.1,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-
-    console.log('DeepSeek response status:', res.status);
-
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error('DeepSeek error:', errText);
-      throw new Error('Analysis failed. Please try again.');
-    }
-
-    const raw = await res.json();
-    const content = raw.choices?.[0]?.message?.content || '';
-    console.log('DeepSeek raw response length:', content.length);
-
-    // Parse JSON from response
-    let data;
-    try {
-      const cleaned = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-      data = JSON.parse(cleaned);
-    } catch(e) {
-      // Try to extract JSON object
-      const match = content.match(/\{[\s\S]*\}/);
-      if (match) {
-        try { data = JSON.parse(match[0]); } catch(e2) {
-          throw new Error('Could not parse analysis response. Please try again.');
+    // Call DeepSeek for each chunk and merge results
+    async function callDeepSeek(chunkText, chunkIndex, totalChunks) {
+      const chunkPrompt = prompt + chunkText;
+      const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + DEEPSEEK_KEY,
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          max_tokens: 4000,
+          temperature: 0.1,
+          messages: [{ role: 'user', content: chunkPrompt }],
+        }),
+      });
+      if (!res.ok) {
+        console.error('DeepSeek chunk', chunkIndex, 'failed:', res.status);
+        return null;
+      }
+      const raw = await res.json();
+      const content = raw.choices?.[0]?.message?.content || '';
+      console.log('Chunk', chunkIndex + 1, '/', totalChunks, '- response:', content.length, 'chars');
+      try {
+        const cleaned = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        return JSON.parse(cleaned);
+      } catch(e) {
+        const match = content.match(/\{[\s\S]*\}/);
+        if (match) {
+          try { return JSON.parse(match[0]); } catch(e2) { return null; }
         }
-      } else {
-        throw new Error('Invalid analysis response. Please try again.');
+        return null;
       }
     }
 
-    // Normalize fields to match existing render logic
-    if (data.negativeItems) {
-      data.negativeItems = data.negativeItems.map((item, i) => ({
-        ...item,
-        id: item.id || 'neg_' + (i + 1),
-        account: item.creditor || item.account || 'Unknown Account',
-        issueType: item.type || item.issueType || 'other',
-        impactLevel: item.impact || item.impactLevel || 'medium',
-        description: item.details || item.description || '',
-      }));
+    // If no negative pages found, use header + first 12000 chars as fallback
+    const chunksToProcess = chunks.length > 0 ? chunks : [reportText.substring(0, 12000)];
+    console.log('Processing', chunksToProcess.length, 'chunks...');
+
+    // Process all chunks in parallel (faster) but cap at 6 chunks to avoid rate limits
+    const maxChunks = Math.min(chunksToProcess.length, 6);
+    const chunkResults = await Promise.all(
+      chunksToProcess.slice(0, maxChunks).map((chunk, i) => callDeepSeek(chunk, i, maxChunks))
+    );
+
+    // Merge all results
+    const validResults = chunkResults.filter(r => r !== null);
+    if (validResults.length === 0) throw new Error('Analysis failed. Please try again.');
+
+    // Use first result as base for summary/recommendations
+    const data = validResults[0];
+
+    // Merge negative items and dispute letters from all chunks
+    const allNegativeItems = [];
+    const allDisputeLetters = [];
+    const seenCreditors = new Set();
+
+    for (const result of validResults) {
+      if (result.negativeItems) {
+        for (const item of result.negativeItems) {
+          const key = (item.creditor || item.account || '').toLowerCase().trim();
+          if (key && !seenCreditors.has(key)) {
+            seenCreditors.add(key);
+            allNegativeItems.push(item);
+          }
+        }
+      }
+      if (result.disputeLetters) {
+        allDisputeLetters.push(...result.disputeLetters);
+      }
     }
 
-    if (data.disputeLetters) {
-      data.disputeLetters = data.disputeLetters.map(letter => ({
-        ...letter,
-        itemId: letter.itemId || 'neg_1',
-        letterType: letter.letterType || 'standard',
-      }));
-    }
+    data.negativeItems = allNegativeItems;
+    data.disputeLetters = allDisputeLetters;
 
-    console.log('Analysis result:', data);
-    trackEvent('analysis_complete', { negative_items: (data.negativeItems || []).length, score: data.creditHealthScore });
+    // Normalize fields
+    data.negativeItems = data.negativeItems.map((item, i) => ({
+      ...item,
+      id: item.id || 'neg_' + (i + 1),
+      account: item.creditor || item.account || 'Unknown Account',
+      issueType: item.type || item.issueType || 'other',
+      impactLevel: item.impact || item.impactLevel || 'medium',
+      description: item.details || item.description || '',
+    }));
+
+    // Re-assign dispute letter itemIds to match normalized neg item ids
+    data.disputeLetters = data.disputeLetters.map((letter, i) => ({
+      ...letter,
+      itemId: data.negativeItems[i] ? data.negativeItems[i].id : ('neg_' + (i + 1)),
+      letterType: letter.letterType || 'standard',
+    }));
+
+    console.log('FINAL - Negative items:', data.negativeItems.length, '| Letters:', data.disputeLetters.length);
+    trackEvent('analysis_complete', { negative_items: data.negativeItems.length, score: data.creditHealthScore });
     return data;
   }
 
