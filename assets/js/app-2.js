@@ -599,13 +599,33 @@
   async function analyzeReport(reportText) {
     const DEEPSEEK_KEY = 'sk-05fc91e2756a46e48757b136626502c8';
 
-    // Sample beginning, middle, and end to cover full report
     const len = reportText.length;
-    const beginning = reportText.substring(0, 4000);
-    const middle = reportText.substring(Math.floor(len / 2) - 1500, Math.floor(len / 2) + 2500);
-    const end = reportText.substring(Math.max(0, len - 3000));
-    const trimmed = (beginning + '\n\n[...middle section...]\n\n' + middle + '\n\n[...end section...]\n\n' + end).substring(0, 12000);
-    console.log('Sending report text:', trimmed.length, 'chars, full PDF length:', len);
+    console.log('Full PDF text length:', len, 'chars');
+
+    const negativeKeywords = [
+      'charge off','charge-off','charged off','collection','debt buyer',
+      'past due','delinquent','delinquency','repossession','bankruptcy',
+      '30 days','60 days','90 days','120 days','150 days','180 days',
+      'amount past due','narrative code'
+    ];
+
+    const header = reportText.substring(0, 2000);
+    const pages = reportText.split(/\f/);
+    const negativeBlocks = [];
+
+    for (const page of pages) {
+      const lower = page.toLowerCase();
+      if (negativeKeywords.some(kw => lower.includes(kw))) {
+        negativeBlocks.push(page.trim());
+      }
+    }
+
+    console.log('Negative pages:', negativeBlocks.length, 'of', pages.length);
+
+    let trimmed = header + '\n\n[NEGATIVE ACCOUNT SECTIONS]\n\n' + negativeBlocks.join('\n\n---\n\n');
+    if (trimmed.length > 14000) trimmed = trimmed.substring(0, 14000);
+
+    console.log('Sending to DeepSeek:', trimmed.length, 'chars');
 
     const prompt = `You are PARSEUR 10X, a careful credit report analysis assistant for consumers.
 Return ONLY valid JSON. Do not use markdown, comments, or backticks.
