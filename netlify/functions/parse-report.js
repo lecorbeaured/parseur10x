@@ -111,28 +111,6 @@ Credit report text:
 // ==================== MODEL DEFINITIONS ====================
 const MODELS = [
   {
-    name: 'Claude Haiku',
-    envKey: 'ANTHROPIC_API_KEY',
-    call: async (prompt, apiKey) => {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 4000,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      });
-      if (!res.ok) throw new Error(`Claude API ${res.status}: ${await res.text()}`);
-      const data = await res.json();
-      return data.content?.[0]?.text || '';
-    },
-  },
-  {
     name: 'DeepSeek V3',
     envKey: 'DEEPSEEK_API_KEY',
     call: async (prompt, apiKey) => {
@@ -144,7 +122,7 @@ const MODELS = [
         },
         body: JSON.stringify({
           model: 'deepseek-chat',
-          max_tokens: 4000,
+          max_tokens: 2000,
           temperature: 0.3,
           messages: [{ role: 'user', content: prompt }],
         }),
@@ -166,7 +144,7 @@ const MODELS = [
         },
         body: JSON.stringify({
           model: 'mistral-small-latest',
-          max_tokens: 4000,
+          max_tokens: 2000,
           temperature: 0.3,
           messages: [{ role: 'user', content: prompt }],
         }),
@@ -174,6 +152,28 @@ const MODELS = [
       if (!res.ok) throw new Error(`Mistral API ${res.status}: ${await res.text()}`);
       const data = await res.json();
       return data.choices?.[0]?.message?.content || '';
+    },
+  },
+  {
+    name: 'Claude Haiku',
+    envKey: 'ANTHROPIC_API_KEY',
+    call: async (prompt, apiKey) => {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 2000,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+      if (!res.ok) throw new Error(`Claude API ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      return data.content?.[0]?.text || '';
     },
   },
 ];
