@@ -2022,3 +2022,41 @@ button, .btn, input[type="submit"] {
   border-radius:999px;
   cursor:pointer;
 }
+
+/* ===== USER INFO MODAL FIELDS ===== */
+.contact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.contact-field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.contact-field input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.contact-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(45, 127, 249, 0.12);
+}
+
+.contact-field input::placeholder {
+  color: var(--text-muted);
+}
